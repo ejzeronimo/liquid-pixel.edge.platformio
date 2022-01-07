@@ -16,7 +16,7 @@ public:
     static const int TARGET_PORT;
 
     static const int CONNECTED_PERIPHERALS_LENGTH;
-    static const CLpxIO CONNECTED_PERIPHERALS[];
+    static CLpxIO CONNECTED_PERIPHERALS[];
 
     static const int CONNECTED_LIGHTS_LENGTH;
     static const CLpxStrip CONNECTED_LIGHTS[];
@@ -24,4 +24,6 @@ public:
     const void initConfig();
 };
 
+//change this based on how many strands you have
+const byte MAX_SEM_COMMANDS = 10;
 extern CLpxConfig LpxConfig;

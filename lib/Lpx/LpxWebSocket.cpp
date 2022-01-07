@@ -5,43 +5,6 @@
 //things like
 //handle
 
-ELpxPackageTypes CLpxJson::packageToEnum(const char *input)
-{
-    if (strcmp(input, "request_handshake_start") == 0)
-        return ELpxPackageTypes::handshake_start;
-    if (strcmp(input, "resolve_handshake_event") == 0)
-        return ELpxPackageTypes::resolve_handshake_event;
-    if (strcmp(input, "lpx_command") == 0)
-        return ELpxPackageTypes::lpx_command;
-
-    //default case
-    return ELpxPackageTypes::unknown_header;
-}
-
-ELpxSchemaTypes CLpxJson::schemaToEnum(const char *input)
-{
-    if (strcmp(input, "strands") == 0)
-        return ELpxSchemaTypes::strands;
-    if (strcmp(input, "peripherals") == 0)
-        return ELpxSchemaTypes::peripherals;
-    if (strcmp(input, "modes") == 0)
-        return ELpxSchemaTypes::modes;
-    if (strcmp(input, "version") == 0)
-        return ELpxSchemaTypes::version;
-
-    //default case
-    return ELpxSchemaTypes::unknown_schema;
-}
-
-ELpxEventTypes CLpxJson::eventToEnum(const char *input)
-{
-    if (strcmp(input, "moment") == 0)
-        return ELpxEventTypes::moment;
-
-    //default case
-    return ELpxEventTypes::unknown_event;
-}
-
 String CLpxJson::handleHandshakeStartJson(JsonObject header, JsonArray request, CLpxConfig config)
 {
     //define the doc for the response
@@ -49,57 +12,67 @@ String CLpxJson::handleHandshakeStartJson(JsonObject header, JsonArray request, 
 
     response["header"]["target"] = header["orgin"];
     response["header"]["orgin"] = config.LPX_ID;
-    response["header"]["type"] = "return_handshake_start";
+    response["header"]["type"] = ELpxReturnTypes::receive_handshake_start;
 
-    for (byte i = 0; i < request.size() - 1; i++)
+    for (byte i = 0; i < request.size(); i++)
     {
-        switch (LpxJson.schemaToEnum(request[i]))
+        const byte requestType = request[i];
+
+        switch (requestType)
         {
         case ELpxSchemaTypes::strands:
         {
-            DynamicJsonDocument strandArrayDoc(256);
-            JsonArray returnStrands = strandArrayDoc.to<JsonArray>();
-
             for (byte i = 0; i < config.CONNECTED_LIGHTS_LENGTH; i++)
             {
-                DynamicJsonDocument strandDoc(32);
+                DynamicJsonDocument strandDoc(64);
                 JsonObject strandObject = strandDoc.to<JsonObject>();
 
+                strandObject["strand_index"] = i;
                 strandObject["pin"] = config.CONNECTED_LIGHTS[i].pin;
                 strandObject["length"] = config.CONNECTED_LIGHTS[i].strand_length;
 
-                returnStrands.add(strandObject);
+                response["output"]["configuration"]["strands"].add(strandObject);
                 strandObject.clear();
             }
-            response["body"]["reponse"]["strands"] = returnStrands;
-            strandArrayDoc.clear();
         }
         break;
         case ELpxSchemaTypes::peripherals:
         {
-            DynamicJsonDocument peripheralArrayDoc(256);
-            JsonArray returnPeripherals = peripheralArrayDoc.to<JsonArray>();
-
             for (byte i = 0; i < config.CONNECTED_PERIPHERALS_LENGTH; i++)
             {
-            }
+                DynamicJsonDocument peripheralDoc(64);
+                JsonObject peripheralObject = peripheralDoc.to<JsonObject>();
 
-            response["body"]["reponse"]["peripherals"] = returnPeripherals;
-            peripheralArrayDoc.clear();
+                peripheralObject["peripheral_index"] = i;
+                peripheralObject["pin"] = config.CONNECTED_PERIPHERALS[i].pin;
+                peripheralObject["mode"] = config.CONNECTED_PERIPHERALS[i].mode;
+                peripheralObject["type"] = config.CONNECTED_PERIPHERALS[i].type;
+
+                response["output"]["configuration"]["peripherals"].add(peripheralObject);
+                peripheralDoc.clear();
+            }
         }
         break;
         case ELpxSchemaTypes::modes:
         {
-            response["body"]["reponse"]["modes"] = ELpxModes::enum_size;
+            response["output"]["configuration"]["modes"] = ELpxModes::enum_size;
         }
         break;
         case ELpxSchemaTypes::version:
         {
-            response["body"]["reponse"]["version"] = config.LPX_VERSION;
+            response["output"]["configuration"]["version"] = config.LPX_VERSION;
+        }
+        break;
+        case ELpxSchemaTypes::telemetry:
+        {
+            response["output"]["configuration"]["telemetry"] = "";
         }
         break;
         default:
-            break;
+        {
+            response["output"]["configuration"]["errors"].add(requestType);
+        }
+        break;
         }
     }
 
@@ -112,27 +85,36 @@ String CLpxJson::handleHandshakeStartJson(JsonObject header, JsonArray request, 
 
 String CLpxJson::handleEventSetupJson(JsonObject header, JsonArray events, CLpxConfig config)
 {
-    for (byte i = 0; i < events.size(); i++)
-    {
-        //okay for each event passed in we check the pin
-        switch (LpxJson.eventToEnum(events[i]["type"]))
-        {
-        case ELpxEventTypes::moment:
-            /* code */
-            Serial.print("moment");
-            break;
-        default:
-            break;
-        }
-    }
-
     //define the doc for the response
     DynamicJsonDocument response(512);
+
+    for (byte i = 0; i < events.size(); i++)
+    {
+        const JsonObject requestEvent = events[i];
+        const byte requestIndex = requestEvent["peripheral_index"];
+
+        //okay for each event passed in we check the pin
+        if (requestEvent["peripheral_index"] < config.CONNECTED_PERIPHERALS_LENGTH)
+        {
+            DynamicJsonDocument peripheralDoc(48);
+            JsonObject peripheralObject = peripheralDoc.to<JsonObject>();
+
+            peripheralObject["result"] = config.CONNECTED_PERIPHERALS[requestIndex].setEvent(requestEvent["type"]);
+            peripheralObject["peripheral_index"] = requestIndex;
+
+            response["result"]["peripherals"].add(peripheralObject);
+            peripheralDoc.clear();
+        }
+        else
+        {
+            response["result"]["peripherals"]["errors"].add(requestIndex);
+        }
+    }
 
     //need the header
     response["header"]["target"] = header["orgin"];
     response["header"]["orgin"] = config.LPX_ID;
-    response["header"]["type"] = "acknowledge_handshake_event";
+    response["header"]["type"] = ELpxReturnTypes::resolve_handshake_event;
 
     String output;
     serializeJson(response, output);
@@ -141,18 +123,22 @@ String CLpxJson::handleEventSetupJson(JsonObject header, JsonArray events, CLpxC
     return output;
 }
 
-CLpxCommand CLpxJson::handleCommandJson(JsonObject header, JsonArray commands, CLpxConfig config)
-{
-    CLpxCommand value;
+// CLpxCommand *CLpxJson::handleCommandJson(JsonObject header, JsonArray commands, CLpxConfig config)
+// {
+//     CLpxCommand value[MAX_SEM_COMMANDS];
 
-    //we need to check if we are the right box
-    if (strcmp(header["target"], config.LPX_ID) == 0)
-    {
-        value.strand_index = commands[0]["strand_index"];
-        value.color[0] = commands[0]["color"][0];
-        value.color[1] = commands[0]["color"][1];
-        value.color[2] = commands[0]["color"][2];
-    }
+//     //we need to check if we are the right box
+//     for (int i = 0; i < commands.size(); i++)
+//     {
+//         //for each command set the right value
+//         CLpxCommand temp;
 
-    return value;
-}
+//         temp.strand_indicies = [commands[i]["strand_indicies"]];
+//         temp.mode = commands[i]["mode"];
+//         temp.primary = commands[i]["primary"];
+
+//         value[i] = temp;
+//     }
+    
+//     return value;
+// }

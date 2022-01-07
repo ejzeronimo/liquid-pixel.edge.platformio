@@ -15,7 +15,7 @@ const int CLpxConfig::TARGET_PORT = 742;
 //NOTE: define all the io under this
 #define i1 31
 const int CLpxConfig::CONNECTED_PERIPHERALS_LENGTH = 1;
-const CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
+CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
     {i1,
      EPeripheralMode::Input,
      EPeripheralType::Digital}};
@@ -25,7 +25,7 @@ const CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
 const int CLpxConfig::CONNECTED_LIGHTS_LENGTH = 1;
 const CLpxStrip CLpxConfig::CONNECTED_LIGHTS[CONNECTED_LIGHTS_LENGTH] = {
     {s1,
-     25}};
+     34}};
 
 const void CLpxConfig::initConfig()
 {

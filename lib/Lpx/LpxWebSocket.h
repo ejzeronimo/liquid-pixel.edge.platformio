@@ -4,48 +4,42 @@
 
 #include <Config.h>
 #include "LpxModes.h"
+#include "LpxPhysical.h"
 #include "LpxCommand.h"
 
 enum ELpxPackageTypes : byte
 {
-    handshake_start = 0,
-    resolve_handshake_event,
-    lpx_command,
-    unknown_header
+    invoke_handshake_start = 0x00,
+    register_handshake_event = 0x01,
+    invoke_handshake_end = 0x02,
+    invoke_lpx_command = 0x03
+};
+
+enum ELpxReturnTypes : byte
+{
+    receive_handshake_start = 0x00,
+    resolve_handshake_event = 0x01,
+    receive_handshake_end = 0x02,
+    receive_lpx_command = 0x03,
 };
 
 enum ELpxSchemaTypes : byte
 {
-    strands = 0,
-    peripherals,
-    modes,
-    version,
-    unknown_schema
-};
-
-enum ELpxEventTypes : byte
-{
-    moment = 0,
-    toggle,
-    hold,
-    value,
-    unknown_event
+    strands = 0x00,
+    peripherals = 0x01,
+    modes = 0x02,
+    version = 0x03,
+    telemetry = 0x04
 };
 
 class CLpxJson
 {
 public:
-    static ELpxPackageTypes packageToEnum(const char *input);
-
-    static ELpxSchemaTypes schemaToEnum(const char *input);
-
-    static ELpxEventTypes eventToEnum(const char *input);
-
     static String handleHandshakeStartJson(JsonObject header, JsonArray request, CLpxConfig config);
 
     static String handleEventSetupJson(JsonObject header, JsonArray events, CLpxConfig config);
 
-    static CLpxCommand handleCommandJson(JsonObject header, JsonArray commands, CLpxConfig config);
+    //static CLpxCommand *handleCommandJson(JsonObject header, JsonArray commands, CLpxConfig config);
 };
 
 extern CLpxJson LpxJson;
