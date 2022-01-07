@@ -31,17 +31,36 @@ enum EPeripheralMode : int
     Output
 };
 
+enum ELpxEventTypes : byte
+{
+    moment = 0x00,
+    toggle = 0x01,
+    hold = 0x02,
+    analog = 0x03,
+    unset = 0x04
+};
+
 class CLpxIO
 {
 public:
-    EPeripheralType type;
     int pin;
+    EPeripheralType type;
     EPeripheralMode mode;
+    ELpxEventTypes event = ELpxEventTypes::unset;
 
     CLpxIO(int p, EPeripheralMode m, EPeripheralType t)
     {
         pin = p;
         mode = m;
         type = t;
+    }
+
+    bool setEvent(ELpxEventTypes e)
+    {
+        if(type == EPeripheralType::Analog && e != ELpxEventTypes::analog){
+            return false;
+        }
+        event = e;
+        return true;
     }
 };

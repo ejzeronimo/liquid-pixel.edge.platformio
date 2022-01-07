@@ -16,7 +16,9 @@ void Task0code(void *pvParameters);
 void Task1code(void *pvParameters);
 
 static SemaphoreHandle_t binsem;
-static CLpxCommand testSemCommand;
+static CLpxCommand globalCommands[MAX_SEM_COMMANDS];
+
+static CLpxCommand lightCommands[MAX_SEM_COMMANDS];
 
 DynamicJsonDocument headRequest(512);
 
@@ -28,11 +30,6 @@ void setup()
   LpxConfig.initConfig();
 
   binsem = xSemaphoreCreateBinary();
-  testSemCommand.strand_index = 0;
-  testSemCommand.color[0] = 0;
-  testSemCommand.color[1] = 0;
-  testSemCommand.color[2] = 0;
-
   xSemaphoreGive(binsem);
 
   //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
@@ -78,9 +75,13 @@ void Task0code(void *pvParameters)
   //the loop to mimic the void loop()  @ core 0
   while (true)
   {
-    if (xSemaphoreTake(binsem, 500 * portTICK_RATE_MS) == pdTRUE)
+    if (xSemaphoreTake(binsem, 50 * portTICK_RATE_MS) == pdTRUE)
     {
-      LpxModes.solid(LpxConfig.CONNECTED_LIGHTS[testSemCommand.strand_index], testSemCommand.color[0], testSemCommand.color[1], testSemCommand.color[2]);
+
+      for (size_t i = 0; i < MAX_SEM_COMMANDS; i++)
+      {
+        lightCommands[i] = globalCommands[i];
+      }
 
       xSemaphoreGive(binsem);
     }
@@ -89,109 +90,43 @@ void Task0code(void *pvParameters)
       Serial.println("Failed to read semaphore");
     }
 
-    vTaskDelay(1 / portTICK_PERIOD_MS);
+    for (size_t i = 0; i < MAX_SEM_COMMANDS; i++)
+    {
 
-    // CLpxStrip S = CONNECTED_LIGHTS[0];
-    // byte M = lpcCommand.Mode;
-    // byte R = lpcCommand.Payload[0];
-    // byte G = lpcCommand.Payload[1];
-    // byte B = lpcCommand.Payload[2];
-    // byte De = lpcCommand.Delay;
-
-    // switch (M)
-    // {
-    // case Off:
-    //   LpxModes.off(S);
-    //   break;
-    // case Solid:
-    //   LpxModes.solid(S, R, G, B);
-    //   break;
-    // case RandomCloudy:
-    //   LpxModes.randomCloudyBlobs(S, R, G, B, De);
-    //   break;
-    // case Flash:
-    //   LpxModes.flash(S, R, G, B, De);
-    //   break;
-    // case Sweep:
-    //   //empty bc it is gone
-    //   break;
-    // case Twinkle:
-    //   LpxModes.randomTwinkle(S, R, G, B, De);
-    //   break;
-    // case RandomTwinkle:
-    //   LpxModes.randomTwinkleRainbow(S, De);
-    //   break;
-    // case TheaterChase:
-    //   LpxModes.theaterChase(S, R, G, B, De);
-    //   break;
-    // case RandomFlash:
-    //   LpxModes.randomFlash(S, De);
-    //   break;
-    // case Chroma:
-    //   LpxModes.chroma(S, De);
-    //   break;
-    // case FadeIn:
-    //   LpxModes.fadeIn(S, R, G, B, De);
-    //   break;
-    // case FadeOut:
-    //   LpxModes.fadeOut(S, De);
-    //   break;
-    // case SuddenFlash:
-    //   LpxModes.sudden(S, R, G, B, De);
-    //   break;
-    // case RandomBreath:
-    //   LpxModes.randomBreath(S, De);
-    //   break;
-    // case Breath:
-    //   LpxModes.rgbFadeInAndOut(S, R, G, B, De);
-    //   break;
-    // case FallingStars:
-    //   LpxModes.fallingStars(S, R, G, B, De);
-    //   break;
-    // case ChristmasChase:
-    //   LpxModes.xmasChase(S, De);
-    //   break;
-    // case Pong:
-    //   LpxModes.pong(S, R, G, B, De);
-    //   break;
-    // case Waterfall:
-    //   LpxModes.waterfall(S, R, G, B, De);
-    //   break;
-    // case Lightning:
-    //   LpxModes.lightning(S, R, G, B, De);
-    //   break;
-    // case Waves:
-    //   LpxModes.waves(S, R, G, B, De);
-    //   break;
-    // case Levels:
-    //   LpxModes.levels(S, R, G, B, De);
-    //   break;
-    // case Rain:
-    //   LpxModes.rain(S, R, G, B, De);
-    //   break;
-    // case SoundSync:
-    //   LpxModes.soundsync(S, R, G, B);
-    //   break;
-    // case Pause:
-    //   //empty bc that how it actually pauses
-    //   break;
-    // default:
-    //   break;
-    // }
+    }
   }
 }
 
 //NOTE: defining some of the function used only in the IOT loop here
 void semaphoreCommandUpdate(JsonObject header, JsonArray commands)
 {
-  //make a json helper that parses and gives back the crucial things like color, command, and index
-  CLpxCommand c = LpxJson.handleCommandJson(header, commands, LpxConfig);
-
-  if (xSemaphoreTake(binsem, 500 * portTICK_RATE_MS) == pdTRUE)
+  if (xSemaphoreTake(binsem, 50 * portTICK_RATE_MS) == pdTRUE)
   {
-    testSemCommand = c;
+    Serial.println(millis());
+
+    for (int i = 0; i < commands.size(); i++)
+    {
+      //for each command set the right value
+      CLpxCommand temp;
+
+      for (size_t j = 0; j < commands[i]["primary"].size(); j++)
+      {
+        temp.strand_indicies[j] = commands[i]["strand_indicies"][j];
+      }
+
+      temp.mode = commands[i]["mode"];
+
+      for (size_t j = 0; j < 3; j++)
+      {
+        temp.primary[j] = commands[i]["primary"][j];
+      }
+
+      globalCommands[i] = temp;
+    }
 
     xSemaphoreGive(binsem);
+
+    Serial.println(millis());
   }
   else
   {
@@ -201,33 +136,33 @@ void semaphoreCommandUpdate(JsonObject header, JsonArray commands)
 
 void onMessageCallback(websockets::WebsocketsMessage message)
 {
-  Serial.println(millis());
-
   Serial.print("Got Message: ");
   Serial.println(message.data());
 
   //make the json into the dock
   deserializeJson(headRequest, message.data());
 
-  const char *requestType = headRequest["header"]["type"];
+  const byte requestType = headRequest["header"]["type"];
 
-  switch (LpxJson.packageToEnum(requestType))
+  switch (requestType)
   {
-  case ELpxPackageTypes::handshake_start:
-    client->send(LpxJson.handleHandshakeStartJson(headRequest["header"], headRequest["body"]["request"], LpxConfig));
+  case ELpxPackageTypes::invoke_handshake_start:
+    client->send(LpxJson.handleHandshakeStartJson(headRequest["header"], headRequest["request"]["configuration"], LpxConfig));
     break;
-  case ELpxPackageTypes::resolve_handshake_event:
-    client->send(LpxJson.handleEventSetupJson(headRequest["header"], headRequest["body"]["events"], LpxConfig));
+  case ELpxPackageTypes::register_handshake_event:
+    client->send(LpxJson.handleEventSetupJson(headRequest["header"], headRequest["deployment"]["peripherals"], LpxConfig));
     break;
-  case ELpxPackageTypes::lpx_command:
-    semaphoreCommandUpdate(headRequest["header"], headRequest["body"]["commands"]);
+  case ELpxPackageTypes::invoke_handshake_end:
+    // semaphoreCommandUpdate(headRequest["header"], headRequest["body"]["commands"]);
+    //quietly end handshake
+    break;
+  case ELpxPackageTypes::invoke_lpx_command:
+    semaphoreCommandUpdate(headRequest["header"], headRequest["request"]["commands"]);
     break;
   default:
     Serial.println("Case not accounted for");
     break;
   }
-
-  Serial.println(millis());
 }
 
 void onEventsCallback(websockets::WebsocketsEvent event, String data)
@@ -260,11 +195,15 @@ void Task1code(void *pvParameters)
   }
 
   Serial.println(" Connected\nNode IP address is: " + WiFi.localIP().toString());
+  Serial.println("Connecting to LPX Server");
 
-  if (client->connect(LpxConfig.TARGET_IP, LpxConfig.TARGET_PORT, "/"))
+  while (client->connect(LpxConfig.TARGET_IP, LpxConfig.TARGET_PORT, "/") == false)
   {
-    Serial.println("Connected to LPX Server: " + (String)LpxConfig.TARGET_IP);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    Serial.print('.');
   }
+
+  Serial.println(" Connected\nLPX Server: " + (String)LpxConfig.TARGET_IP);
 
   client->onMessage(onMessageCallback);
   client->onEvent(onEventsCallback);

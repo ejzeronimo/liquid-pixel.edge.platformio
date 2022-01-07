@@ -34,6 +34,87 @@ enum ELpxModes : byte
     enum_size
 };
 
+      // switch (M)
+      // {
+      // case Off:
+      //   LpxModes.off(S);
+      //   break;
+      // case Solid:
+      //   LpxModes.solid(S, R, G, B);
+      //   break;
+      // case RandomCloudy:
+      //   LpxModes.randomCloudyBlobs(S, R, G, B, De);
+      //   break;
+      // case Flash:
+      //   LpxModes.flash(S, R, G, B, De);
+      //   break;
+      // case Sweep:
+      //   //empty bc it is gone
+      //   break;
+      // case Twinkle:
+      //   LpxModes.randomTwinkle(S, R, G, B, De);
+      //   break;
+      // case RandomTwinkle:
+      //   LpxModes.randomTwinkleRainbow(S, De);
+      //   break;
+      // case TheaterChase:
+      //   LpxModes.theaterChase(S, R, G, B, De);
+      //   break;
+      // case RandomFlash:
+      //   LpxModes.randomFlash(S, De);
+      //   break;
+      // case Chroma:
+      //   LpxModes.chroma(S, De);
+      //   break;
+      // case FadeIn:
+      //   LpxModes.fadeIn(S, R, G, B, De);
+      //   break;
+      // case FadeOut:
+      //   LpxModes.fadeOut(S, De);
+      //   break;
+      // case SuddenFlash:
+      //   LpxModes.sudden(S, R, G, B, De);
+      //   break;
+      // case RandomBreath:
+      //   LpxModes.randomBreath(S, De);
+      //   break;
+      // case Breath:
+      //   LpxModes.rgbFadeInAndOut(S, R, G, B, De);
+      //   break;
+      // case FallingStars:
+      //   LpxModes.fallingStars(S, R, G, B, De);
+      //   break;
+      // case ChristmasChase:
+      //   LpxModes.xmasChase(S, De);
+      //   break;
+      // case Pong:
+      //   LpxModes.pong(S, R, G, B, De);
+      //   break;
+      // case Waterfall:
+      //   LpxModes.waterfall(S, R, G, B, De);
+      //   break;
+      // case Lightning:
+      //   LpxModes.lightning(S, R, G, B, De);
+      //   break;
+      // case Waves:
+      //   LpxModes.waves(S, R, G, B, De);
+      //   break;
+      // case Levels:
+      //   LpxModes.levels(S, R, G, B, De);
+      //   break;
+      // case Rain:
+      //   LpxModes.rain(S, R, G, B, De);
+      //   break;
+      // case SoundSync:
+      //   LpxModes.soundsync(S, R, G, B);
+      //   break;
+      // case Pause:
+      //   //empty bc that how it actually pauses
+      //   break;
+      // default:
+      //   break;
+      // }
+
 class CLpxModes
 {
 public:
