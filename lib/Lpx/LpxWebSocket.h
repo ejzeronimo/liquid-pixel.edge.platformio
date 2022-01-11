@@ -39,7 +39,7 @@ public:
 
     static String handleEventSetupJson(JsonObject header, JsonArray events, CLpxConfig config);
 
-    //static CLpxCommand *handleCommandJson(JsonObject header, JsonArray commands, CLpxConfig config);
+    static CLpxCommand handleCommandJson(JsonObject command, CLpxConfig config);
 };
 
 extern CLpxJson LpxJson;

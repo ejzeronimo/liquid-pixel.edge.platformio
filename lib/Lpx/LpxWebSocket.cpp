@@ -123,22 +123,17 @@ String CLpxJson::handleEventSetupJson(JsonObject header, JsonArray events, CLpxC
     return output;
 }
 
-// CLpxCommand *CLpxJson::handleCommandJson(JsonObject header, JsonArray commands, CLpxConfig config)
-// {
-//     CLpxCommand value[MAX_SEM_COMMANDS];
+CLpxCommand CLpxJson::handleCommandJson(JsonObject command, CLpxConfig config)
+{
+    CLpxCommand value;
 
-//     //we need to check if we are the right box
-//     for (int i = 0; i < commands.size(); i++)
-//     {
-//         //for each command set the right value
-//         CLpxCommand temp;
+    value.strand_index = command["strand_index"];
+    value.mode = command["mode"];
 
-//         temp.strand_indicies = [commands[i]["strand_indicies"]];
-//         temp.mode = commands[i]["mode"];
-//         temp.primary = commands[i]["primary"];
+    for (size_t i = 0; i < 3; i++)
+    {
+        value.primary[i] = command["primary"][i];
+    }
 
-//         value[i] = temp;
-//     }
-    
-//     return value;
-// }
+    return value;
+}

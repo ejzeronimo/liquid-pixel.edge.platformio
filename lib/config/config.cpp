@@ -31,6 +31,7 @@ const void CLpxConfig::initConfig()
 {
     //in here be sure to addleds() for any new strips
     FastLED.addLeds<WS2811, s1>(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length).setCorrection(TypicalLEDStrip);
+    //NEOPIXEL
 
     //in here be sure to set pinmode
     pinMode(i1, INPUT);
