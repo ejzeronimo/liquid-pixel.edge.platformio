@@ -25,5 +25,4 @@ public:
 };
 
 //change this based on how many strands you have
-const byte MAX_SEM_COMMANDS = 10;
 extern CLpxConfig LpxConfig;

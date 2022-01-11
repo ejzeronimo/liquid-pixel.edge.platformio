@@ -8,7 +8,11 @@ class CLpxCommand
 {
 public:
     //the strand data
-    byte strand_indicies[MAX_SEM_COMMANDS];
+    byte strand_index;
+    
+    boolean isTandem;
+    byte master_strand;
+    int masterOffset;
 
     ELpxModes mode;
 

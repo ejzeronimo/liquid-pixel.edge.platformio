@@ -4,6 +4,7 @@
 //these are network realted
 #include <ArduinoWebsockets.h>
 #include <ArduinoJson.h>
+#include <vector>
 //these are mine config last so all the vars are okay
 #include <Lpx.h>
 #include <Config.h>
@@ -16,9 +17,9 @@ void Task0code(void *pvParameters);
 void Task1code(void *pvParameters);
 
 static SemaphoreHandle_t binsem;
-static CLpxCommand globalCommands[MAX_SEM_COMMANDS];
+static std::vector<CLpxCommand> globalCommands;
 
-static CLpxCommand lightCommands[MAX_SEM_COMMANDS];
+std::vector<CLpxCommand> localCommands;
 
 DynamicJsonDocument headRequest(512);
 
@@ -31,6 +32,8 @@ void setup()
 
   binsem = xSemaphoreCreateBinary();
   xSemaphoreGive(binsem);
+
+  setCpuFrequencyMhz(240);
 
   //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
   xTaskCreatePinnedToCore(
@@ -57,71 +60,18 @@ void setup()
 //kill the vanilla loop
 void loop() { vTaskDelete(NULL); }
 
-//NOTE: in here we should only take care of running the lights
-void Task0code(void *pvParameters)
-{
-  for (byte i = 0; i < LpxConfig.CONNECTED_LIGHTS_LENGTH; i++)
-  {
-    Serial.println(i);
-    LpxModes.waterfallRainbow(LpxConfig.CONNECTED_LIGHTS[i], 50);
-    LpxModes.off(LpxConfig.CONNECTED_LIGHTS[i]);
-  }
-
-  //fill_solid(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length, CRGB(255, 0, 0));
-  //FastLED.show();
-
-  Serial.println("Node_" + (String)LpxConfig.LPX_ID + "_Lit");
-
-  //the loop to mimic the void loop()  @ core 0
-  while (true)
-  {
-    if (xSemaphoreTake(binsem, 50 * portTICK_RATE_MS) == pdTRUE)
-    {
-
-      for (size_t i = 0; i < MAX_SEM_COMMANDS; i++)
-      {
-        lightCommands[i] = globalCommands[i];
-      }
-
-      xSemaphoreGive(binsem);
-    }
-    else
-    {
-      Serial.println("Failed to read semaphore");
-    }
-
-    for (size_t i = 0; i < MAX_SEM_COMMANDS; i++)
-    {
-
-    }
-  }
-}
-
 //NOTE: defining some of the function used only in the IOT loop here
 void semaphoreCommandUpdate(JsonObject header, JsonArray commands)
 {
-  if (xSemaphoreTake(binsem, 50 * portTICK_RATE_MS) == pdTRUE)
+  if (xSemaphoreTake(binsem, 500 * portTICK_RATE_MS) == pdTRUE)
   {
     Serial.println(millis());
 
     for (int i = 0; i < commands.size(); i++)
     {
       //for each command set the right value
-      CLpxCommand temp;
-
-      for (size_t j = 0; j < commands[i]["primary"].size(); j++)
-      {
-        temp.strand_indicies[j] = commands[i]["strand_indicies"][j];
-      }
-
-      temp.mode = commands[i]["mode"];
-
-      for (size_t j = 0; j < 3; j++)
-      {
-        temp.primary[j] = commands[i]["primary"][j];
-      }
-
-      globalCommands[i] = temp;
+      CLpxCommand temp = LpxJson.handleCommandJson(commands[i], LpxConfig);
+      globalCommands.push_back(temp);
     }
 
     xSemaphoreGive(binsem);
@@ -179,7 +129,7 @@ void onEventsCallback(websockets::WebsocketsEvent event, String data)
 }
 
 //NOTE: in here we should take care of all connection and telemetry
-void Task1code(void *pvParameters)
+void Task0code(void *pvParameters)
 {
   Serial.begin(115200);
 
@@ -190,7 +140,7 @@ void Task1code(void *pvParameters)
 
   while (WiFi.status() != WL_CONNECTED)
   {
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     Serial.print('.');
   }
 
@@ -199,7 +149,7 @@ void Task1code(void *pvParameters)
 
   while (client->connect(LpxConfig.TARGET_IP, LpxConfig.TARGET_PORT, "/") == false)
   {
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     Serial.print('.');
   }
 
@@ -229,5 +179,44 @@ void Task1code(void *pvParameters)
       client->onMessage(onMessageCallback);
       client->onEvent(onEventsCallback);
     }
+
+    delay(1); //not using vTaskDelay(1 / portTICK_PERIOD_MS)
+  }
+}
+
+//NOTE: in here we should only take care of running the lights
+void Task1code(void *pvParameters)
+{
+  for (byte i = 0; i < LpxConfig.CONNECTED_LIGHTS_LENGTH; i++)
+  {
+    Serial.println(i);
+    LpxModes.waterfallRainbow(LpxConfig.CONNECTED_LIGHTS[i], 50);
+    LpxModes.off(LpxConfig.CONNECTED_LIGHTS[i]);
+  }
+
+  //fill_solid(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length, CRGB(255, 0, 0));
+  //FastLED.show();
+
+  Serial.println("Node_" + (String)LpxConfig.LPX_ID + "_Lit");
+
+  //the loop to mimic the void loop()  @ core 0
+  while (true)
+  {
+    if (xSemaphoreTake(binsem, 500 * portTICK_RATE_MS) == pdTRUE)
+    {
+      localCommands = globalCommands;
+      xSemaphoreGive(binsem);
+    }
+    else
+    {
+      Serial.println("Failed to read semaphore");
+    }
+
+    for (size_t i = 0; i < localCommands.size(); i++)
+    {
+      LpxModes.solid(LpxConfig.CONNECTED_LIGHTS[localCommands[i].strand_index], localCommands[i].primary[0], localCommands[i].primary[1], localCommands[i].primary[2]);
+    }
+
+    vTaskDelay(1 / portTICK_RATE_MS);
   }
 }
