@@ -22,15 +22,18 @@ CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
 
 //NOTE: define all the strands under this
 #define s1 14
-const int CLpxConfig::CONNECTED_LIGHTS_LENGTH = 1;
-const CLpxStrip CLpxConfig::CONNECTED_LIGHTS[CONNECTED_LIGHTS_LENGTH] = {
-    {s1,
-     34}};
+#define s2 27
+const int CLpxConfig::CONNECTED_LIGHTS_LENGTH = 2;
+CLpxStrip CLpxConfig::CONNECTED_LIGHTS[CONNECTED_LIGHTS_LENGTH] = {
+    {s1, 34},
+    {s2, 46}};
 
 const void CLpxConfig::initConfig()
 {
     //in here be sure to addleds() for any new strips
     FastLED.addLeds<WS2811, s1>(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length).setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<WS2811, s2>(CONNECTED_LIGHTS[1].strand, CONNECTED_LIGHTS[1].strand_length).setCorrection(TypicalLEDStrip);
+
     //NEOPIXEL
 
     //in here be sure to set pinmode

@@ -19,7 +19,7 @@ public:
     static CLpxIO CONNECTED_PERIPHERALS[];
 
     static const int CONNECTED_LIGHTS_LENGTH;
-    static const CLpxStrip CONNECTED_LIGHTS[];
+    static CLpxStrip CONNECTED_LIGHTS[];
 
     const void initConfig();
 };
