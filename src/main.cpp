@@ -41,7 +41,7 @@ void setup()
       "Task0",   /* name of task. */
       10000,     /* Stack size of task */
       NULL,      /* parameter of the task */
-      2,         /* priority of the task */
+      0,         /* priority of the task */
       &Task0,    /* Task handle to keep track of created task */
       0);        /* pin task to core 0 */
 
@@ -51,21 +51,23 @@ void setup()
       "Task1",   /* name of task. */
       10000,     /* Stack size of task */
       NULL,      /* parameter of the task */
-      2,         /* priority of the task */
-      // when priority was set to 100 then network scan would not complete
+      0,         /* priority of the task */
       &Task1, /* Task handle to keep track of created task */
       1);     /* pin task to core 1 */
 }
 
 //kill the vanilla loop
-void loop() { vTaskDelete(NULL); }
+void loop()
+{
+  vTaskDelete(NULL);
+  return;
+}
 
 //NOTE: defining some of the function used only in the IOT loop here
 void semaphoreCommandUpdate(JsonObject header, JsonArray commands)
 {
   if (xSemaphoreTake(binsem, 500 * portTICK_RATE_MS) == pdTRUE)
   {
-    Serial.println(millis());
 
     for (int i = 0; i < commands.size(); i++)
     {
@@ -75,8 +77,6 @@ void semaphoreCommandUpdate(JsonObject header, JsonArray commands)
     }
 
     xSemaphoreGive(binsem);
-
-    Serial.println(millis());
   }
   else
   {
@@ -189,13 +189,20 @@ void Task1code(void *pvParameters)
 {
   for (byte i = 0; i < LpxConfig.CONNECTED_LIGHTS_LENGTH; i++)
   {
-    Serial.println(i);
-    LpxModes.waterfallRainbow(LpxConfig.CONNECTED_LIGHTS[i], 50);
-    LpxModes.off(LpxConfig.CONNECTED_LIGHTS[i]);
+    CLpxCommand foo;
+    foo.strand_index = i;
+    foo.mode = ELpxModes::Waterfall;
+    foo.delayMs = 50;
+
+    //LpxRunner.runCommand(foo);
+
+    foo.mode = ELpxModes::Off;
+
+    //LpxRunner.runCommand(foo);
   }
 
   //fill_solid(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length, CRGB(255, 0, 0));
-  //FastLED.show();
+  //FastLED[0].showLeds();
 
   Serial.println("Node_" + (String)LpxConfig.LPX_ID + "_Lit");
 
@@ -212,11 +219,19 @@ void Task1code(void *pvParameters)
       Serial.println("Failed to read semaphore");
     }
 
-    for (size_t i = 0; i < localCommands.size(); i++)
+    for (byte i = 0; i < localCommands.size(); i++)
     {
-      LpxModes.solid(LpxConfig.CONNECTED_LIGHTS[localCommands[i].strand_index], localCommands[i].primary[0], localCommands[i].primary[1], localCommands[i].primary[2]);
+      // LpxModes.solid(LpxConfig.CONNECTED_LIGHTS[localCommands[i].strand_index], localCommands[i].primary[0], localCommands[i].primary[1], localCommands[i].primary[2]);
+
+      // for each command in the localcommand we run the
     }
 
-    vTaskDelay(1 / portTICK_RATE_MS);
+    for (byte i = 0; i < LpxConfig.CONNECTED_PERIPHERALS_LENGTH; i++)
+    {
+      //for each strand we call the code
+      LpxConfig.CONNECTED_LIGHTS[i].showStrand();
+    }
+
+    delay(1); //not using vTaskDelay(1 / portTICK_PERIOD_MS)
   }
 }

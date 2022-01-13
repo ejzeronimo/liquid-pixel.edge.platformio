@@ -5,16 +5,17 @@
 class CLpxStrip
 {
 public:
+    static int gIndex;
+
+    TaskHandle_t taskHandle;
+    int index;
     int pin;
     int strand_length;
     CRGB *strand;
 
-    CLpxStrip(int p, int l)
-    {
-        pin = p;
-        strand_length = l;
-        strand = new CRGB[l];
-    }
+    CLpxStrip(int p, int l);
+
+    void showStrand();
 };
 
 enum EPeripheralType : uint8_t
@@ -48,19 +49,7 @@ public:
     EPeripheralMode mode;
     ELpxEventTypes event = ELpxEventTypes::unset;
 
-    CLpxIO(int p, EPeripheralMode m, EPeripheralType t)
-    {
-        pin = p;
-        mode = m;
-        type = t;
-    }
+    CLpxIO(int p, EPeripheralMode m, EPeripheralType t);
 
-    bool setEvent(ELpxEventTypes e)
-    {
-        if(type == EPeripheralType::Analog && e != ELpxEventTypes::analog){
-            return false;
-        }
-        event = e;
-        return true;
-    }
+    bool setEvent(ELpxEventTypes e);
 };
