@@ -3,32 +3,46 @@
 CLpxModes LpxModes;
 bool ONE_TIME_PER_COMMAND;
 
-boolean CLpxModes::smartDelay(int ms)
+boolean CLpxModes::smartDelay(int ms, CLpxStrip t)
 {
   long startMs = millis(); //get the time
   while (millis() < (startMs + ms))
   {
-    yield(); //do nothing?
-    if (false)
-    {
-      return false; //back out to get new command
-    }
+    delayMicroseconds(10); //do nothing?
+
+    //yield();
+
+    // TaskHandle_t h = (TaskHandle_t)xSemaphoreGetMutexHolder(t.strandSem);
+    // if (!(h == t.taskHandle || h == 0x0))
+    // {
+    //   Serial.println("here");
+    //   printf("%p\n", h);
+
+    //   return false; //back out to get new command
+    // }
+
+    // if(t.ownSem)
+    // {
+    //   Serial.println("here");
+    //   return false;
+    // }
   }
+  //delay(ms);
   return true;
 }
 
 //NOTE: OFF
-void CLpxModes::off(CLpxStrip target)
+void CLpxModes::off(CLpxStrip t)
 {
-  fill_solid(target.strand, target.strand_length, CRGB(0, 0, 0));
-  target.showStrand();
+  fill_solid(t.strand, t.strand_length, CRGB(0, 0, 0));
+  t.showStrand();
 }
 
 //NOTE: SOLID
-void CLpxModes::solid(CLpxStrip target, byte r, byte g, byte b)
+void CLpxModes::solid(CLpxStrip t, CLpxCommand c)
 {
-  fill_solid(target.strand, target.strand_length, CRGB(r, g, b));
-  target.showStrand();
+  fill_solid(t.strand, t.strand_length, CRGB(c.primary[0], c.primary[1], c.primary[2]));
+  t.showStrand();
 }
 
 //NOTE: RANDOM CLOUDY BLOBS
@@ -50,7 +64,7 @@ void CLpxModes::randomCloudyBlobs(CLpxStrip target, byte r, byte g, byte b, int 
     nscale8(target.strand, target.strand_length, 255 - br);
 
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
 }
 
@@ -59,10 +73,10 @@ void CLpxModes::flash(CLpxStrip target, byte r, byte g, byte b, int delayMs)
 {
   fill_solid(target.strand, target.strand_length, CRGB(r, g, b));
   target.showStrand();
-  LpxModes.smartDelay(delayMs);
+  LpxModes.smartDelay(delayMs, target);
   fill_solid(target.strand, target.strand_length, CRGB(0, 0, 0));
   target.showStrand();
-  LpxModes.smartDelay(delayMs);
+  LpxModes.smartDelay(delayMs, target);
 }
 
 //NOTE: SWEEP
@@ -90,7 +104,7 @@ void CLpxModes::randomTwinkle(CLpxStrip target, byte r, byte g, byte b, int dela
     nscale8(target.strand, target.strand_length, 255 - br);
 
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
 }
 
@@ -113,7 +127,7 @@ void CLpxModes::randomTwinkleRainbow(CLpxStrip target, int delayMs)
     nscale8(target.strand, target.strand_length, 255 - br);
 
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
 }
 
@@ -122,10 +136,10 @@ void CLpxModes::randomFlash(CLpxStrip target, int delayMs)
 {
   fill_solid(target.strand, target.strand_length, CRGB(random16(255), random16(255), random16(255)));
   target.showStrand();
-  LpxModes.smartDelay(delayMs);
+  LpxModes.smartDelay(delayMs, target);
   fill_solid(target.strand, target.strand_length, CRGB(0, 0, 0));
   target.showStrand();
-  LpxModes.smartDelay(delayMs);
+  LpxModes.smartDelay(delayMs, target);
 }
 
 //NOTE: THEATER CHASE
@@ -142,7 +156,7 @@ void CLpxModes::theaterChase(CLpxStrip target, byte r, byte g, byte b, int delay
     fill_solid(target.strand + i, 1, CRGB(r, g, b));
   }
   target.showStrand();
-  LpxModes.smartDelay(delayMs);
+  LpxModes.smartDelay(delayMs, target);
 }
 
 //NOTE: CHROMA
@@ -152,7 +166,7 @@ void CLpxModes::chroma(CLpxStrip target, int delayMs)
   {
     fill_rainbow(target.strand, target.strand_length, i);
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
 }
 
@@ -168,7 +182,7 @@ void CLpxModes::fadeIn(CLpxStrip target, byte r, byte g, byte b, int delayMs)
   for (int i = 0; i < 255; i++)
   {
     nblend(target.strand, temp, target.strand_length, 25);
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
     target.showStrand();
   }
 }
@@ -180,7 +194,7 @@ void CLpxModes::fadeOut(CLpxStrip target, int delayMs)
   for (int i = 0; i < 255; i++)
   {
     fadeToBlackBy(target.strand, target.strand_length, 25);
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
     target.showStrand();
   }
 }
@@ -192,7 +206,7 @@ void CLpxModes::sudden(CLpxStrip target, byte r, byte g, byte b, int delayMs)
   {
     fill_solid(target.strand, target.strand_length, CRGB(r, g, b));
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
     fill_solid(target.strand, target.strand_length, CRGB(0, 0, 0));
     target.showStrand();
     ONE_TIME_PER_COMMAND = false;
@@ -208,14 +222,14 @@ void CLpxModes::randomBreath(CLpxStrip target, int delayMs)
     fill_solid(target.strand, target.strand_length, rand);
     fadeLightBy(target.strand, target.strand_length, 255 - i);
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
   for (int i = 0; i < 255; i += 5)
   {
     fill_solid(target.strand, target.strand_length, rand);
     fadeLightBy(target.strand, target.strand_length, i);
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
 }
 
@@ -227,14 +241,14 @@ void CLpxModes::rgbFadeInAndOut(CLpxStrip target, byte r, byte g, byte b, int de
     fill_solid(target.strand, target.strand_length, CRGB(r, g, b));
     fadeLightBy(target.strand, target.strand_length, 255 - i);
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
   for (int i = 0; i < 255; i += 5)
   {
     fill_solid(target.strand, target.strand_length, CRGB(r, g, b));
     fadeLightBy(target.strand, target.strand_length, i);
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
 }
 
@@ -258,10 +272,10 @@ void CLpxModes::fallingStars(CLpxStrip target, byte r, byte g, byte b, int delay
       {
         target.strand[curpos] = CRGB(rf, gf, bf);
       }
-      LpxModes.smartDelay(2);
+      LpxModes.smartDelay(2, target);
       target.showStrand();
     }
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
     if ((pos - trailLen) >= 0 && (pos - trailLen) < target.strand_length)
     {
       target.strand[pos - trailLen] = CRGB(0, 0, 0);
@@ -283,7 +297,7 @@ void CLpxModes::xmasChase(CLpxStrip target, int delayMs)
     fill_solid(target.strand + i, 1, CRGB(255, 0, 0));
   }
   target.showStrand();
-  LpxModes.smartDelay(delayMs);
+  LpxModes.smartDelay(delayMs, target);
 }
 
 //NOTE: PONG -- redo at some point
@@ -306,10 +320,10 @@ void CLpxModes::pong(CLpxStrip target, byte r, byte g, byte b, int delayMs)
       {
         target.strand[curpos] = CRGB(rf, gf, bf);
       }
-      LpxModes.smartDelay(2);
+      LpxModes.smartDelay(2, target);
       target.showStrand();
     }
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
     if ((pos - trailLen) >= 0 && (pos - trailLen) < target.strand_length)
     {
       target.strand[pos - trailLen] = CRGB(0, 0, 0);
@@ -331,10 +345,10 @@ void CLpxModes::pong(CLpxStrip target, byte r, byte g, byte b, int delayMs)
       {
         target.strand[curpos] = CRGB(rf, gf, bf);
       }
-      LpxModes.smartDelay(2);
+      LpxModes.smartDelay(2, target);
       target.showStrand();
     }
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
     if ((pos + trailLen) >= 0 && (pos + trailLen) < target.strand_length)
     {
       target.strand[pos + trailLen] = CRGB(0, 0, 0);
@@ -351,20 +365,23 @@ void CLpxModes::waterfall(CLpxStrip target, byte r, byte g, byte b, int delayMs)
     fill_solid(target.strand, i, CRGB(r, g, b));
     i++;
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
 }
 
 //NOTE: WATERFALL RAINBOW --add to options
-void CLpxModes::waterfallRainbow(CLpxStrip target, int delayMs)
+void CLpxModes::waterfallRainbow(CLpxStrip t, CLpxCommand c)
 {
   int i = 0;
-  while (i <= target.strand_length)
+  while (i <= t.strand_length)
   {
-    fill_rainbow(target.strand, i, 0);
+    fill_rainbow(t.strand, i, 0);
     i++;
-    target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    t.showStrand();
+    if (!LpxModes.smartDelay(c.delayMs, t))
+    {
+      break;
+    }
   }
 }
 
@@ -373,13 +390,13 @@ void CLpxModes::lightning(CLpxStrip target, byte r, byte g, byte b, int delayMs)
 {
   if (ONE_TIME_PER_COMMAND)
   {
-    solid(target, r, g, b);
-    LpxModes.smartDelay(round(delayMs / 6)); // how long on
-    solid(target, 0, 0, 0);
-    LpxModes.smartDelay(round(delayMs / 4)); // how long off
-    solid(target, r, g, b);
-    LpxModes.smartDelay(round(delayMs / 2)); // how long on
-    solid(target, 0, 0, 0);
+    //solid(target, r, g, b);
+    LpxModes.smartDelay(round(delayMs / 6), target); // how long on
+    //solid(target, 0, 0, 0);
+    LpxModes.smartDelay(round(delayMs / 4), target); // how long off
+    //solid(target, r, g, b);
+    LpxModes.smartDelay(round(delayMs / 2), target); // how long on
+    //solid(target, 0, 0, 0);
     ONE_TIME_PER_COMMAND = false;
   }
 }
@@ -401,7 +418,7 @@ void CLpxModes::waves(CLpxStrip target, byte r, byte g, byte b, int delayMs)
       {
         target.strand[prepos] = CRGB(rs, gs, bs);
       }
-      LpxModes.smartDelay(2);
+      LpxModes.smartDelay(2, target);
       target.showStrand();
     }
     if (pos < target.strand_length)
@@ -418,10 +435,10 @@ void CLpxModes::waves(CLpxStrip target, byte r, byte g, byte b, int delayMs)
       {
         target.strand[curpos] = CRGB(rf, gf, bf);
       }
-      LpxModes.smartDelay(2);
+      LpxModes.smartDelay(2, target);
       target.showStrand();
     }
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
     if ((pos - (4 * trailLen)) >= 0 && (pos - (4 * trailLen)) < target.strand_length)
     {
       target.strand[pos - (4 * trailLen)] = CRGB(0, 0, 0);
@@ -450,10 +467,10 @@ void CLpxModes::levels(CLpxStrip target, byte r, byte g, byte b, int delayMs)
       {
         target.strand[curpos] = CRGB(rf, gf, bf);
       }
-      LpxModes.smartDelay(2);
+      LpxModes.smartDelay(2, target);
       target.showStrand();
     }
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
   for (int pos = maxheight; pos >= 0; pos--)
   {
@@ -471,10 +488,10 @@ void CLpxModes::levels(CLpxStrip target, byte r, byte g, byte b, int delayMs)
       {
         target.strand[curpos] = CRGB(rf, gf, bf);
       }
-      LpxModes.smartDelay(2);
+      LpxModes.smartDelay(2, target);
       target.showStrand();
     }
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
 }
 
@@ -507,11 +524,11 @@ void CLpxModes::rain(CLpxStrip target, byte r, byte g, byte b, int delayMs)
         {
           target.strand[i + q - (trailLen + 1)] = CRGB(0, 0, 0);
         }
-        LpxModes.smartDelay(2);
+        LpxModes.smartDelay(2, target);
       }
     }
     target.showStrand();
-    LpxModes.smartDelay(delayMs);
+    LpxModes.smartDelay(delayMs, target);
   }
 }
 

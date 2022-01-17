@@ -10,6 +10,9 @@ String CLpxJson::handleHandshakeStartJson(JsonObject header, JsonArray request, 
     //define the doc for the response
     DynamicJsonDocument response(512);
 
+    String temp = header["orgin"];
+    config.TARGET_ID = temp;
+
     response["header"]["target"] = header["orgin"];
     response["header"]["orgin"] = config.LPX_ID;
     response["header"]["type"] = ELpxReturnTypes::receive_handshake_start;
@@ -99,7 +102,7 @@ String CLpxJson::handleEventSetupJson(JsonObject header, JsonArray events, CLpxC
             DynamicJsonDocument peripheralDoc(48);
             JsonObject peripheralObject = peripheralDoc.to<JsonObject>();
 
-            peripheralObject["result"] = config.CONNECTED_PERIPHERALS[requestIndex].setEvent(requestEvent["type"]);
+            peripheralObject["result"] = config.CONNECTED_PERIPHERALS[requestIndex].setEvent(requestEvent["event"]);
             peripheralObject["peripheral_index"] = requestIndex;
 
             response["result"]["peripherals"].add(peripheralObject);

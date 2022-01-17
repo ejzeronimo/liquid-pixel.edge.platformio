@@ -1,6 +1,5 @@
 //these basics are needed until I swap over fully
 #include <Arduino.h>
-#include <FastLED.h>
 //these are network realted
 #include <ArduinoWebsockets.h>
 #include <ArduinoJson.h>
@@ -19,8 +18,6 @@ void Task1code(void *pvParameters);
 static SemaphoreHandle_t binsem;
 static std::vector<CLpxCommand> globalCommands;
 
-std::vector<CLpxCommand> localCommands;
-
 DynamicJsonDocument headRequest(512);
 
 websockets::WebsocketsClient *client = new websockets::WebsocketsClient();
@@ -35,7 +32,7 @@ void setup()
 
   setCpuFrequencyMhz(240);
 
-  //create a task that will be executed in the Task1code() function, with priority 1 and executed on core 0
+  //create a task that will be executed in the Task0code() function, with priority 1 and executed on core 0
   xTaskCreatePinnedToCore(
       Task0code, /* Task function. */
       "Task0",   /* name of task. */
@@ -44,16 +41,6 @@ void setup()
       0,         /* priority of the task */
       &Task0,    /* Task handle to keep track of created task */
       0);        /* pin task to core 0 */
-
-  //create a task that will be executed in the Task2code() function, with priority 1 and executed on core 1
-  xTaskCreatePinnedToCore(
-      Task1code, /* Task function. */
-      "Task1",   /* name of task. */
-      10000,     /* Stack size of task */
-      NULL,      /* parameter of the task */
-      0,         /* priority of the task */
-      &Task1, /* Task handle to keep track of created task */
-      1);     /* pin task to core 1 */
 }
 
 //kill the vanilla loop
@@ -64,23 +51,13 @@ void loop()
 }
 
 //NOTE: defining some of the function used only in the IOT loop here
-void semaphoreCommandUpdate(JsonObject header, JsonArray commands)
+void invokeLocalCommand(JsonObject header, JsonArray commands)
 {
-  if (xSemaphoreTake(binsem, 500 * portTICK_RATE_MS) == pdTRUE)
+  for (int i = 0; i < commands.size(); i++)
   {
-
-    for (int i = 0; i < commands.size(); i++)
-    {
-      //for each command set the right value
-      CLpxCommand temp = LpxJson.handleCommandJson(commands[i], LpxConfig);
-      globalCommands.push_back(temp);
-    }
-
-    xSemaphoreGive(binsem);
-  }
-  else
-  {
-    Serial.println("Failed to grab semaphore");
+    //for each command set the right value
+    CLpxCommand temp = LpxJson.handleCommandJson(commands[i], LpxConfig);
+    LpxConfig.CONNECTED_LIGHTS[temp.strand_index].commandAsync(temp);
   }
 }
 
@@ -100,14 +77,40 @@ void onMessageCallback(websockets::WebsocketsMessage message)
     client->send(LpxJson.handleHandshakeStartJson(headRequest["header"], headRequest["request"]["configuration"], LpxConfig));
     break;
   case ELpxPackageTypes::register_handshake_event:
+  {
+    JsonArray obj = headRequest["deployment"]["peripherals"];
+    JsonArray *ptr = &obj;
+
+    //create a task that will be executed in the Task1code() function, with priority 0 and executed on core 1
+    xTaskCreatePinnedToCore(
+        Task1code,   /* Task function. */
+        "Task1",     /* name of task. */
+        10000,       /* Stack size of task */
+        (void *)ptr, /* parameter of the task */
+        2,           /* priority of the task */
+        &Task1,      /* Task handle to keep track of created task */
+        0);          /* pin task to core 0 */
+
     client->send(LpxJson.handleEventSetupJson(headRequest["header"], headRequest["deployment"]["peripherals"], LpxConfig));
-    break;
+  }
+  break;
   case ELpxPackageTypes::invoke_handshake_end:
-    // semaphoreCommandUpdate(headRequest["header"], headRequest["body"]["commands"]);
-    //quietly end handshake
-    break;
+  {
+    DynamicJsonDocument response(512);
+
+    //make our header
+    response["header"]["target"] = LpxConfig.TARGET_ID;
+    response["header"]["orgin"] = LpxConfig.LPX_ID;
+    response["header"]["type"] = ELpxReturnTypes::receive_handshake_end;
+
+    String output;
+    serializeJson(response, output);
+    client->send(output);
+    response.clear();
+  }
+  break;
   case ELpxPackageTypes::invoke_lpx_command:
-    semaphoreCommandUpdate(headRequest["header"], headRequest["request"]["commands"]);
+    invokeLocalCommand(headRequest["header"], headRequest["request"]["commands"]);
     break;
   default:
     Serial.println("Case not accounted for");
@@ -132,6 +135,25 @@ void onEventsCallback(websockets::WebsocketsEvent event, String data)
 void Task0code(void *pvParameters)
 {
   Serial.begin(115200);
+
+  CLpxCommand waterfallRainbow;
+  waterfallRainbow.delayMs = 50;
+  waterfallRainbow.mode = ELpxModes::Waterfall;
+
+  CLpxCommand off;
+  off.mode = ELpxModes::Off;
+
+  CLpxCommand src[] = {waterfallRainbow, off};
+
+  std::vector<CLpxCommand> dest;
+  dest.insert(dest.begin(), std::begin(src), std::end(src));
+
+  for (byte i = 0; i < LpxConfig.CONNECTED_LIGHTS_LENGTH; i++)
+  {
+    LpxConfig.CONNECTED_LIGHTS[i].commandAsyncQ(dest);
+  }
+
+  Serial.println("Node_" + (String)LpxConfig.LPX_ID + "_Lit");
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(LpxConfig.SSID_NAME, LpxConfig.SSID_PASSPHRASE);
@@ -160,7 +182,7 @@ void Task0code(void *pvParameters)
 
   Serial.println("Node_" + (String)LpxConfig.LPX_ID + "_Online");
 
-  //the loop to mimic the void loop() @ core 1
+  //the loop to mimic the void loop() @ core 0
   while (true)
   {
     if (client != NULL)
@@ -180,58 +202,167 @@ void Task0code(void *pvParameters)
       client->onEvent(onEventsCallback);
     }
 
-    delay(1); //not using vTaskDelay(1 / portTICK_PERIOD_MS)
+    //delayMicroseconds(10);
+    vTaskDelay(1 / portTICK_RATE_MS);
   }
 }
 
-//NOTE: in here we should only take care of running the lights
+//NOTE: in here we should take care of all event triggers for IO
 void Task1code(void *pvParameters)
 {
-  for (byte i = 0; i < LpxConfig.CONNECTED_LIGHTS_LENGTH; i++)
+  //take the jsonarray in
+  JsonArray arr = *((JsonArray *)pvParameters);
+
+  //we iterate through the array and config the IO
+  for (int i = 0; i < arr.size(); i++)
   {
-    CLpxCommand foo;
-    foo.strand_index = i;
-    foo.mode = ELpxModes::Waterfall;
-    foo.delayMs = 50;
+    JsonObject obj = arr[i];
+    int index = obj["peripheral_index"];
 
-    //LpxRunner.runCommand(foo);
-
-    foo.mode = ELpxModes::Off;
-
-    //LpxRunner.runCommand(foo);
+    LpxConfig.CONNECTED_PERIPHERALS[index].mode = obj["type"];
   }
 
-  //fill_solid(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length, CRGB(255, 0, 0));
-  //FastLED[0].showLeds();
+  Serial.println("Node_" + (String)LpxConfig.LPX_ID + "_Events_Online");
 
-  Serial.println("Node_" + (String)LpxConfig.LPX_ID + "_Lit");
-
-  //the loop to mimic the void loop()  @ core 0
+  //the loop to mimic the void loop() @ core 1
   while (true)
   {
-    if (xSemaphoreTake(binsem, 500 * portTICK_RATE_MS) == pdTRUE)
+    for (int i = 0; i < LpxConfig.CONNECTED_PERIPHERALS_LENGTH; i++)
     {
-      localCommands = globalCommands;
-      xSemaphoreGive(binsem);
-    }
-    else
-    {
-      Serial.println("Failed to read semaphore");
+      CLpxIO *io = &LpxConfig.CONNECTED_PERIPHERALS[i];
+
+      switch (io->event)
+      {
+      case ELpxEventTypes::moment:
+      {
+        if (digitalRead(io->pin) == 1 && !io->localEventTriggered)
+        {
+          io->eventTrigger = true;
+          io->localEventTriggered = true;
+        }
+        else if (digitalRead(io->pin) == 0 && io->localEventTriggered)
+        {
+          io->localEventTriggered = false;
+        }
+      }
+      break;
+      case ELpxEventTypes::toggle:
+      {
+        if (digitalRead(io->pin) == 1 && !io->localEventTriggered)
+        {
+          io->eventTrigger = true;
+          io->localEventTriggered = true;
+        }
+        else if (digitalRead(io->pin) == 0 && io->localEventTriggered)
+        {
+          io->eventTrigger = true;
+          io->localEventTriggered = false;
+        }
+      }
+      break;
+      case ELpxEventTypes::hold:
+      {
+        if (digitalRead(io->pin) == 1 && !io->localEventTriggered)
+        {
+          io->eventTrigger = true;
+          io->localEventTriggered = true;
+        }
+        else if (digitalRead(io->pin) == 0 && io->localEventTriggered)
+        {
+          io->eventTrigger = true;
+          io->localEventTriggered = false;
+        }
+      }
+      break;
+      case ELpxEventTypes::analog:
+      {
+        //TODO: make analog work (its really noisy)
+        // int temp = analogRead(io->pin);
+        // if (temp != io->localEventValue)
+        // {
+        //   io->localEventValue = temp;
+        // }
+      }
+      break;
+      default:
+        //its unset
+        break;
+      }
+
+      //takes care of the data event
+      if (io->eventTrigger)
+      {
+        DynamicJsonDocument response(512);
+
+        //make our header
+        response["header"]["target"] = LpxConfig.TARGET_ID;
+        response["header"]["orgin"] = LpxConfig.LPX_ID;
+        response["header"]["type"] = ELpxReturnTypes::invoke_io_event;
+
+        DynamicJsonDocument returnDoc(128);
+        JsonObject returnObject = returnDoc.to<JsonObject>();
+
+        returnObject["peripheral_index"] = i;
+        returnObject["event"] = io->event;
+
+        switch (io->event)
+        {
+        case ELpxEventTypes::moment:
+        {
+          //Serial.print("moment");
+          io->eventTrigger = false;
+        }
+        break;
+        case ELpxEventTypes::toggle:
+        {
+          //Serial.print("toggle");
+          //Serial.print(io->localEventTriggered);
+          returnObject["state"] = io->localEventTriggered;
+
+          io->eventTrigger = false;
+        }
+        break;
+        case ELpxEventTypes::hold:
+        {
+          if (io->localEventTriggered)
+          {
+            //Serial.print("holddown");
+            returnObject["state"] = "down";
+          }
+          else
+          {
+            returnObject["state"] = "up";
+            //Serial.print("holdrelease");
+          }
+
+          io->eventTrigger = false;
+        }
+        break;
+        case ELpxEventTypes::analog:
+        {
+          //TODO:
+        }
+        break;
+        default:
+          //its unset
+          break;
+        }
+        response["request"]["events"][0] = returnDoc;
+        returnDoc.clear();
+
+        String output;
+        serializeJson(response, output);
+        //Serial.println(output);
+
+        //suspend out main task so we can send (maybe)
+        //vTaskSuspend(Task0);
+        client->send(output);
+        //vTaskResume(Task0);
+
+        response.clear();
+      }
     }
 
-    for (byte i = 0; i < localCommands.size(); i++)
-    {
-      // LpxModes.solid(LpxConfig.CONNECTED_LIGHTS[localCommands[i].strand_index], localCommands[i].primary[0], localCommands[i].primary[1], localCommands[i].primary[2]);
-
-      // for each command in the localcommand we run the
-    }
-
-    for (byte i = 0; i < LpxConfig.CONNECTED_PERIPHERALS_LENGTH; i++)
-    {
-      //for each strand we call the code
-      LpxConfig.CONNECTED_LIGHTS[i].showStrand();
-    }
-
-    delay(1); //not using vTaskDelay(1 / portTICK_PERIOD_MS)
+    vTaskDelay(1 / portTICK_RATE_MS);
   }
 }
