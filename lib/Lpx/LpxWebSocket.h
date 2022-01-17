@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-#include <Config.h>
+#include "Config.h"
 #include "LpxModes.h"
 #include "LpxPhysical.h"
 #include "LpxCommand.h"
@@ -21,6 +21,7 @@ enum ELpxReturnTypes : byte
     resolve_handshake_event = 0x01,
     receive_handshake_end = 0x02,
     receive_lpx_command = 0x03,
+    invoke_io_event = 0x04,
 };
 
 enum ELpxSchemaTypes : byte

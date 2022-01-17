@@ -11,14 +11,16 @@ const char *CLpxConfig::SSID_PASSPHRASE = "PASSWORD";
 
 const char *CLpxConfig::TARGET_IP = "172.16.17.57";
 const int CLpxConfig::TARGET_PORT = 742;
+String CLpxConfig::TARGET_ID = "";
 
 //NOTE: define all the io under this
-#define i1 31
-const int CLpxConfig::CONNECTED_PERIPHERALS_LENGTH = 1;
-CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
-    {i1,
-     EPeripheralMode::Input,
-     EPeripheralType::Digital}};
+#define i1 34
+const int CLpxConfig::CONNECTED_PERIPHERALS_LENGTH = 0;
+CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {};
+// CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
+//     {i1,
+//      EPeripheralMode::Input,
+//      EPeripheralType::Digital}};
 
 //NOTE: define all the strands under this
 #define s1 14
@@ -34,8 +36,8 @@ const void CLpxConfig::initConfig()
     FastLED.addLeds<WS2811, s1>(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length).setCorrection(TypicalLEDStrip);
     FastLED.addLeds<WS2811, s2>(CONNECTED_LIGHTS[1].strand, CONNECTED_LIGHTS[1].strand_length).setCorrection(TypicalLEDStrip);
 
-    //NEOPIXEL
-
     //in here be sure to set pinmode
-    pinMode(i1, INPUT);
+    //pulldown to ground if intput should be high
+
+    //pinMode(i1, INPUT_PULLDOWN);
 }

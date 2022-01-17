@@ -2,50 +2,23 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include "LpxPhysical.h"
+#include "LpxCommand.h"
 
-//NOTE: this is all lighting mode stuff
-enum ELpxModes : byte
-{
-    Off = 0,
-    Solid,          //1
-    RandomCloudy,   //2
-    Flash,          //3
-    Sweep,          //4
-    Twinkle,        //5
-    RandomTwinkle,  //6
-    RandomFlash,    //7
-    TheaterChase,   //8
-    Chroma,         //9
-    FadeIn,         //10
-    FadeOut,        //11
-    SuddenFlash,    //12
-    RandomBreath,   //13
-    Breath,         //14
-    FallingStars,   //15
-    ChristmasChase, //16
-    Pong,           //17
-    Waterfall,      //18
-    Lightning,      //19
-    Waves,          //20
-    Levels,         //21
-    Rain,           //22
-    Pause,          //23
-    SoundSync,      //24
-    enum_size
-};
+class CLpxStrip;
+class CLpxCommand;
 
 class CLpxModes
 {
 public:
-    static boolean smartDelay(int ms);
-    
+    static boolean smartDelay(int ms, CLpxStrip target);
+
     // off - fill a strand of LEDs with 0,0,0
     // Example: off(target);
     static void off(CLpxStrip target);
 
     // solid - fill a strand of LEDs with R,G,B
     // Example: solid(target, r, g, b);
-    static void solid(CLpxStrip target, byte r, byte g, byte b);
+    static void solid(CLpxStrip target, CLpxCommand command);
 
     // blobs - creates clusters of R,G,B breathe in and out with delay D
     // Example: randomCloudyBlobs(target, r, g, b, d);
@@ -85,7 +58,7 @@ public:
 
     static void waterfall(CLpxStrip target, byte r, byte g, byte b, int delayMs);
 
-    static void waterfallRainbow(CLpxStrip target, int delayMs);
+    static void waterfallRainbow(CLpxStrip target, CLpxCommand command);
 
     static void lightning(CLpxStrip target, byte r, byte g, byte b, int delayMs);
 

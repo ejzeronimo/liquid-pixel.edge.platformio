@@ -14,6 +14,7 @@ public:
 
     static const char *TARGET_IP;
     static const int TARGET_PORT;
+    static String TARGET_ID;
 
     static const int CONNECTED_PERIPHERALS_LENGTH;
     static CLpxIO CONNECTED_PERIPHERALS[];
