@@ -132,6 +132,7 @@ CLpxCommand CLpxJson::handleCommandJson(JsonObject command, CLpxConfig config)
 
     value.strand_index = command["strand_index"];
     value.mode = command["mode"];
+    value.delayMs = command["delayMs"];
 
     for (size_t i = 0; i < 3; i++)
     {

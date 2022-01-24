@@ -26,7 +26,7 @@ public:
 
     // flash - fill a strand of LEDs with R,G,B and with delay D
     // Example: flash(target, r, g, b, d);
-    static void flash(CLpxStrip target, byte r, byte g, byte b, int delayMs);
+    static void flash(CLpxStrip target, CLpxCommand command);
 
     static void sweep(CLpxStrip target, byte r, byte g, byte b, int delayMs);
 
