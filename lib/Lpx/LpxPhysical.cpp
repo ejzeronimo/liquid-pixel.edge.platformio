@@ -29,11 +29,14 @@ void singleCommandHelper(void *instancePointer)
             LpxModes.waterfallRainbow(obj, com);
             runCycle = false;
             break;
+        case ELpxModes::Flash:
+            LpxModes.flash(obj, com);
+            break;
         default:
             break;
         }
 
-        delay(0);
+        vTaskDelay(1 / portTICK_RATE_MS);
     }
 
     //we kill once we exit our loop
@@ -54,6 +57,7 @@ void multipleCommandHelper(void *instancePointer)
     {
         for (int i = 0; i < cmds.size(); i++)
         {
+
             switch (cmds.at(i).mode)
             {
             case ELpxModes::Off:
@@ -76,6 +80,8 @@ void multipleCommandHelper(void *instancePointer)
         delay(0);
     }
 
+    Serial.println("kill");
+
     //we kill once we exit our loop
     CLpxStrip *killObj = (CLpxStrip *)instancePointer;
     killObj->taskHandle = NULL;
@@ -94,6 +100,7 @@ CLpxStrip::CLpxStrip(int p, int l)
 
 void CLpxStrip::showStrand()
 {
+    Serial.println("leds shown");
     FastLED[index].showLeds();
 }
 

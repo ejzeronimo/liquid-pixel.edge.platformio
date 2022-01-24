@@ -8,7 +8,7 @@ boolean CLpxModes::smartDelay(int ms, CLpxStrip t)
   long startMs = millis(); //get the time
   while (millis() < (startMs + ms))
   {
-    delayMicroseconds(10); //do nothing?
+    vTaskDelay(1 / portTICK_RATE_MS);
 
     //yield();
 
@@ -36,6 +36,8 @@ void CLpxModes::off(CLpxStrip t)
 {
   fill_solid(t.strand, t.strand_length, CRGB(0, 0, 0));
   t.showStrand();
+
+  Serial.print("ran offf");
 }
 
 //NOTE: SOLID
@@ -69,14 +71,14 @@ void CLpxModes::randomCloudyBlobs(CLpxStrip target, byte r, byte g, byte b, int 
 }
 
 //NOTE: FLASH
-void CLpxModes::flash(CLpxStrip target, byte r, byte g, byte b, int delayMs)
+void CLpxModes::flash(CLpxStrip t, CLpxCommand c)
 {
-  fill_solid(target.strand, target.strand_length, CRGB(r, g, b));
-  target.showStrand();
-  LpxModes.smartDelay(delayMs, target);
-  fill_solid(target.strand, target.strand_length, CRGB(0, 0, 0));
-  target.showStrand();
-  LpxModes.smartDelay(delayMs, target);
+  fill_solid(t.strand, t.strand_length, CRGB(c.primary[0], c.primary[1], c.primary[2]));
+  t.showStrand();
+  LpxModes.smartDelay(c.delayMs, t);
+  fill_solid(t.strand, t.strand_length, CRGB(0, 0, 0));
+  t.showStrand();
+  LpxModes.smartDelay(c.delayMs, t);
 }
 
 //NOTE: SWEEP

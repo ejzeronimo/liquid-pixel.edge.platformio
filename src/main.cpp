@@ -7,6 +7,9 @@
 //these are mine config last so all the vars are okay
 #include <Lpx.h>
 #include <Config.h>
+//these are to disable brownout
+#include <soc/soc.h>
+#include <soc/rtc_cntl_reg.h>
 
 //okay we need 2 threads
 TaskHandle_t Task0;
@@ -136,27 +139,37 @@ void Task0code(void *pvParameters)
 {
   Serial.begin(115200);
 
-  CLpxCommand waterfallRainbow;
-  waterfallRainbow.delayMs = 50;
-  waterfallRainbow.mode = ELpxModes::Waterfall;
-
-  CLpxCommand off;
-  off.mode = ELpxModes::Off;
-
-  CLpxCommand src[] = {waterfallRainbow, off};
-
-  std::vector<CLpxCommand> dest;
-  dest.insert(dest.begin(), std::begin(src), std::end(src));
-
   for (byte i = 0; i < LpxConfig.CONNECTED_LIGHTS_LENGTH; i++)
   {
+    CLpxCommand waterfallRainbow;
+    waterfallRainbow.delayMs = 50;
+    waterfallRainbow.mode = ELpxModes::Waterfall;
+    // waterfallRainbow.mode = ELpxModes::Solid;
+    // waterfallRainbow.primary[0] = 255;
+    // waterfallRainbow.primary[1] = 255;
+    // waterfallRainbow.primary[2] = 255;
+
+    CLpxCommand off;
+    off.mode = ELpxModes::Off;
+
+    CLpxCommand src[] = {waterfallRainbow, off};
+
+    std::vector<CLpxCommand> dest;
+    dest.insert(dest.begin(), std::begin(src), std::end(src));
+
     LpxConfig.CONNECTED_LIGHTS[i].commandAsyncQ(dest);
   }
 
   Serial.println("Node_" + (String)LpxConfig.LPX_ID + "_Lit");
 
+  //disable brownout detector
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+
   WiFi.mode(WIFI_STA);
   WiFi.begin(LpxConfig.SSID_NAME, LpxConfig.SSID_PASSPHRASE);
+
+  //renanble brownout detector
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 1);
 
   Serial.println("Connecting to: " + (String)LpxConfig.SSID_NAME);
 
