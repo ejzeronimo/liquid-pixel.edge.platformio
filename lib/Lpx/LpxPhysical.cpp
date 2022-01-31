@@ -100,7 +100,6 @@ CLpxStrip::CLpxStrip(int p, int l)
 
 void CLpxStrip::showStrand()
 {
-    Serial.println("leds shown");
     FastLED[index].showLeds();
 }
 

@@ -4,7 +4,7 @@
 enum ELpxModes : int
 {
     Off = 0,
-    Solid,          //1
+    Solid,          //1 //default
     RandomCloudy,   //2
     Flash,          //3
     Sweep,          //4
