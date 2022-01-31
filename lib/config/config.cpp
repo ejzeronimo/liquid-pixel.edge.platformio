@@ -4,7 +4,7 @@ CLpxConfig LpxConfig;
 
 //NOTE: defining the contants now
 const char *CLpxConfig::LPX_VERSION = "01.24.2022";
-const char *CLpxConfig::LPX_ID = "E0002";
+const char *CLpxConfig::LPX_ID = "E0001";
 
 const char *CLpxConfig::SSID_NAME = "WIFI";
 const char *CLpxConfig::SSID_PASSPHRASE = "PASSWORD";
@@ -19,20 +19,23 @@ const int CLpxConfig::CONNECTED_PERIPHERALS_LENGTH = 1;
 CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
     {i1,
      EPeripheralMode::Input,
-     EPeripheralType::Digital}};
+     EPeripheralType::Digital}
+};
 
 //NOTE: define all the strands under this
 #define s1 14
-// #define s2 27
-const int CLpxConfig::CONNECTED_LIGHTS_LENGTH = 1;
+#define s2 27
+const int CLpxConfig::CONNECTED_LIGHTS_LENGTH = 2;
 CLpxStrip CLpxConfig::CONNECTED_LIGHTS[CONNECTED_LIGHTS_LENGTH] = {
-    {s1, 25}};
+    {s1, 25},
+    {s2, 25}
+};
 
 const void CLpxConfig::initConfig()
 {
     //in here be sure to addleds() for any new strips
     FastLED.addLeds<WS2811, s1>(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length).setCorrection(TypicalLEDStrip);
-    // FastLED.addLeds<WS2811, s2>(CONNECTED_LIGHTS[1].strand, CONNECTED_LIGHTS[1].strand_length).setCorrection(TypicalLEDStrip);
+    FastLED.addLeds<WS2811, s2>(CONNECTED_LIGHTS[1].strand, CONNECTED_LIGHTS[1].strand_length).setCorrection(TypicalLEDStrip);
 
     //in here be sure to set pinmode
     //pulldown to ground if intput should be high
