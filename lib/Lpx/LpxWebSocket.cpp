@@ -128,16 +128,23 @@ String CLpxJson::handleEventSetupJson(JsonObject header, JsonArray events, CLpxC
 
 CLpxCommand CLpxJson::handleCommandJson(JsonObject command, CLpxConfig config)
 {
+    // String y = "starting obj creation " + (String)millis();
+    // Serial.println(y);
+
     CLpxCommand value;
 
     value.strand_index = command["strand_index"];
     value.mode = command["mode"];
     value.delayMs = command["delayMs"];
+    value.hard_interrupt = command["hard_interrupt"];
 
     for (size_t i = 0; i < 3; i++)
     {
         value.primary[i] = command["primary"][i];
     }
+
+    // y = "ending obj creation " + (String)millis();
+    // Serial.println(y);
 
     return value;
 }
