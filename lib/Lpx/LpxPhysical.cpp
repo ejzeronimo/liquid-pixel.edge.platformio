@@ -1,92 +1,129 @@
 #include "LpxPhysical.h"
 
-//NOTE: declaring values for the CLpxStrip
-int CLpxStrip::gIndex = 0;
-
-//this one just runs a command and does not care
-void singleCommandHelper(void *instancePointer)
+//NOTE: we make a new task for each strand
+void stripTaskHandler(void *instancePointer)
 {
-    //get the object that made this task & cache
-    CLpxStrip obj = *((CLpxStrip *)instancePointer);
-    CLpxCommand com = obj.currentCommand;
+    //get the object that made this task & make a pointer to the stuff we need
+    CLpxStrip *obj = (CLpxStrip *)instancePointer;
+    bool oneTime = true;
+    bool handler = obj->taskStateControl;
 
-    //define our run parameter
-    bool runCycle = true;
-
-    while (runCycle)
+    while (true)
     {
-        switch (com.mode)
+        for (int i = 0; i < obj->commandList.size(); i++)
         {
-        case ELpxModes::Off:
-            LpxModes.off(obj);
-            runCycle = false;
-            break;
-        case ELpxModes::Solid:
-            LpxModes.solid(obj, com);
-            runCycle = false;
-            break;
-        case ELpxModes::Waterfall:
-            LpxModes.waterfallRainbow(obj, com);
-            runCycle = false;
-            break;
-        case ELpxModes::Flash:
-            LpxModes.flash(obj, com);
-            break;
-        default:
-            break;
-        }
+            //store the current command
+            CLpxCommand c = obj->commandList.at(0);
 
-        vTaskDelay(1 / portTICK_RATE_MS);
-    }
-
-    //we kill once we exit our loop
-    CLpxStrip *killObj = (CLpxStrip *)instancePointer;
-    killObj->taskHandle = NULL;
-    vTaskDelete(NULL);
-}
-
-void multipleCommandHelper(void *instancePointer)
-{
-    CLpxStrip obj = *((CLpxStrip *)instancePointer);
-    std::vector<CLpxCommand> cmds = obj.currentQ;
-
-    //define our run parameter
-    int runCount = cmds.size();
-
-    while (runCount != 0)
-    {
-        for (int i = 0; i < cmds.size(); i++)
-        {
-
-            switch (cmds.at(i).mode)
+            //run the switch
+            switch (c.mode)
             {
             case ELpxModes::Off:
-                LpxModes.off(obj);
-                runCount--;
+                oneTime = LpxModes.off(obj, oneTime);
                 break;
             case ELpxModes::Solid:
-                LpxModes.solid(obj, cmds.at(i));
-                runCount--;
+                oneTime = LpxModes.solid(obj, c, oneTime);
+                break;
+            case ELpxModes::RandomCloudy:
+                LpxModes.randomCloudyBlobs(obj, c, oneTime);
+                break;
+            case ELpxModes::Flash:
+                LpxModes.flash(obj, c, handler);
+                break;
+            case ELpxModes::Sweep:
+                //empty bc it is gone
+                break;
+            case ELpxModes::Twinkle:
+                LpxModes.randomTwinkle(obj, c, handler);
+                break;
+            case ELpxModes::RandomTwinkle:
+                LpxModes.randomTwinkleRainbow(obj, c, handler);
+                break;
+            case ELpxModes::TheaterChase:
+                LpxModes.theaterChase(obj, c, handler);
+                break;
+            case ELpxModes::RandomFlash:
+                LpxModes.randomFlash(obj, c, handler);
+                break;
+            case ELpxModes::Chroma:
+                LpxModes.chroma(obj, c, handler);
+                break;
+            case ELpxModes::FadeIn:
+                oneTime = LpxModes.fadeIn(obj, c, oneTime, handler);
+                break;
+            case ELpxModes::FadeOut:
+                oneTime = LpxModes.fadeOut(obj, c, oneTime, handler);
+                break;
+            case ELpxModes::SuddenFlash:
+                oneTime = LpxModes.sudden(obj, c, oneTime, handler);
+                break;
+            case ELpxModes::RandomBreath:
+                LpxModes.randomBreath(obj, c, handler);
+                break;
+            case ELpxModes::Breath:
+                LpxModes.rgbFadeInAndOut(obj, c, handler);
+                break;
+            case ELpxModes::FallingStars:
+                LpxModes.fallingStars(obj, c, handler);
+                break;
+            case ELpxModes::ChristmasChase:
+                LpxModes.xmasChase(obj, c, handler);
+                break;
+            case ELpxModes::Pong:
+                LpxModes.pong(obj, c, handler);
                 break;
             case ELpxModes::Waterfall:
-                LpxModes.waterfallRainbow(obj, cmds.at(i));
-                runCount--;
+                oneTime = LpxModes.waterfall(obj, c, oneTime, handler);
+                break;
+            case ELpxModes::Lightning:
+                oneTime = LpxModes.lightning(obj, c, oneTime, handler);
+                break;
+            case ELpxModes::Waves:
+                LpxModes.waves(obj, c, handler);
+                break;
+            case ELpxModes::Levels:
+                LpxModes.levels(obj, c, handler);
+                break;
+            case ELpxModes::Rain:
+                LpxModes.rain(obj, c, handler);
+                break;
+            case ELpxModes::Pause:
+                //empty bc that how it actually pauses
+                break;
+            case ELpxModes::SoundSync:
+                //empty bc its gone
+                break;
+            case ELpxModes::RainbowWaterfall:
+                oneTime = LpxModes.waterfallRainbow(obj, c, oneTime, handler);
                 break;
             default:
                 break;
             }
+
+            //remove command from cue
+            if (obj->commandList.size() > 1)
+            {
+                obj->commandList.erase(obj->commandList.begin());
+                oneTime = true;
+            }
+
+            if (handler != obj->taskStateControl)
+            {
+                handler = obj->taskStateControl;
+                oneTime = true;
+            }
+            // else if ((c.mode != obj->commandList.at(0).mode) && (c.delayMs != obj->commandList.at(0).delayMs) && (c.primary != obj->commandList.at(0).primary))
+            // {
+            //     oneTime = true;
+            // }
         }
 
-        delay(0);
+        vTaskDelay(1 / portTICK_RATE_MS);
     }
-
-    Serial.println("kill");
-
-    //we kill once we exit our loop
-    CLpxStrip *killObj = (CLpxStrip *)instancePointer;
-    killObj->taskHandle = NULL;
-    vTaskDelete(NULL);
 }
+
+//NOTE: declaring values for the CLpxStrip
+int CLpxStrip::gIndex = 0;
 
 CLpxStrip::CLpxStrip(int p, int l)
 {
@@ -96,73 +133,58 @@ CLpxStrip::CLpxStrip(int p, int l)
     pin = p;
     strand_length = l;
     strand = new CRGB[l];
-}
 
-void CLpxStrip::showStrand()
-{
-    FastLED[index].showLeds();
-}
-
-void CLpxStrip::commandAsync(CLpxCommand command)
-{
-    //set out command
-    currentCommand = command;
-
-    startUniqueTask(singleCommandHelper, (void *)this);
-}
-
-void CLpxStrip::commandAsyncQ(std::vector<CLpxCommand> cmds)
-{
-    //make a tuple with this object and an array of commands
-    currentQ = cmds;
-
-    startUniqueTask(multipleCommandHelper, (void *)this);
-}
-
-void CLpxStrip::commandSync(CLpxCommand command)
-{
-    //we need to wait here
-
-    //set out command
-    currentCommand = command;
-
-    startUniqueTask(singleCommandHelper, (void *)this);
-
-    //might not need
-    while (getTaskStatus())
-    {
-        //spin our wheels
-        delayMicroseconds(100);
-    }
-}
-
-void CLpxStrip::startUniqueTask(TaskFunction_t l, void *v)
-{
-    //if our task handle is not null kill it with fire
-    if (taskHandle != NULL)
-    {
-        vTaskDelete(taskHandle);
-    }
+    taskStateControl = false;
 
     //okay so lets try making a new task that has the sole job of running this command
     xTaskCreatePinnedToCore(
-        l,
+        stripTaskHandler,
         "StripTask" + index,
         8000,
-        v,
+        (void *)this,
         1,
         &taskHandle,
         1);
 }
 
-bool CLpxStrip::getTaskStatus()
+void CLpxStrip::showStrand()
 {
-    //if our task handle is not null then it exists
-    if (taskHandle != NULL)
-    {
-        return true;
-    }
-    return false;
+    // FastLED.show();
+    FastLED[index].showLeds();
+
+    // String y = "shown " + (String)millis();
+    // Serial.println(y);
+
+    // delay (10);
+}
+
+void CLpxStrip::commandAsync(CLpxCommand command)
+{
+    vTaskSuspend(taskHandle);
+
+    //set out command
+    commandList.clear();
+    commandList.push_back(command);
+
+    taskStateControl = !taskStateControl;
+
+    // String y = "restarting task " + (String)millis();
+    // Serial.println(y);
+
+    vTaskResume(taskHandle);
+}
+
+void CLpxStrip::commandAsync(std::vector<CLpxCommand> cmds)
+{
+    vTaskSuspend(taskHandle);
+
+    //make a tuple with this object and an array of commands
+    commandList.clear();
+    commandList = cmds;
+
+    taskStateControl = !taskStateControl;
+
+    vTaskResume(taskHandle);
 }
 
 //NOTE: declaring values for the CLpxIO

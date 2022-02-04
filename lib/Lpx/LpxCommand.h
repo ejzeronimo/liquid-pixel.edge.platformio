@@ -28,6 +28,7 @@ enum ELpxModes : int
     Rain,           //22
     Pause,          //23
     SoundSync,      //24
+    RainbowWaterfall, //25
     enum_size
 };
 
@@ -37,6 +38,8 @@ class CLpxCommand
 public:
     //the strand data
     int strand_index;
+
+    bool hard_interrupt;
 
     bool isTandem;
     int master_strand;

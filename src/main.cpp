@@ -37,13 +37,13 @@ void setup()
 
   //create a task that will be executed in the Task0code() function, with priority 1 and executed on core 0
   xTaskCreatePinnedToCore(
-      Task0code, /* Task function. */
-      "Task0",   /* name of task. */
-      10000,     /* Stack size of task */
-      NULL,      /* parameter of the task */
-      0,         /* priority of the task */
-      &Task0,    /* Task handle to keep track of created task */
-      0);        /* pin task to core 0 */
+      Task0code,   /* Task function. */
+      "MainTask0", /* name of task. */
+      10000,       /* Stack size of task */
+      NULL,        /* parameter of the task */
+      0,           /* priority of the task */
+      &Task0,      /* Task handle to keep track of created task */
+      0);          /* pin task to core 0 */
 }
 
 //kill the vanilla loop
@@ -58,6 +58,9 @@ void invokeLocalCommand(JsonObject header, JsonArray commands)
 {
   for (int i = 0; i < commands.size(); i++)
   {
+    // String y = "starting command " + millis();
+    // Serial.println(y);
+
     //for each command set the right value
     CLpxCommand temp = LpxJson.handleCommandJson(commands[i], LpxConfig);
     LpxConfig.CONNECTED_LIGHTS[temp.strand_index].commandAsync(temp);
@@ -86,13 +89,13 @@ void onMessageCallback(websockets::WebsocketsMessage message)
 
     //create a task that will be executed in the Task1code() function, with priority 0 and executed on core 1
     xTaskCreatePinnedToCore(
-        Task1code,   /* Task function. */
-        "Task1",     /* name of task. */
-        10000,       /* Stack size of task */
-        (void *)ptr, /* parameter of the task */
-        2,           /* priority of the task */
-        &Task1,      /* Task handle to keep track of created task */
-        0);          /* pin task to core 0 */
+        Task1code,    /* Task function. */
+        "EventTask1", /* name of task. */
+        10000,        /* Stack size of task */
+        (void *)ptr,  /* parameter of the task */
+        2,            /* priority of the task */
+        &Task1,       /* Task handle to keep track of created task */
+        0);           /* pin task to core 0 */
 
     client->send(LpxJson.handleEventSetupJson(headRequest["header"], headRequest["deployment"]["peripherals"], LpxConfig));
   }
@@ -141,23 +144,25 @@ void Task0code(void *pvParameters)
 
   for (byte i = 0; i < LpxConfig.CONNECTED_LIGHTS_LENGTH; i++)
   {
-    CLpxCommand waterfallRainbow;
-    waterfallRainbow.delayMs = 50;
-    waterfallRainbow.mode = ELpxModes::Waterfall;
-    // waterfallRainbow.mode = ELpxModes::Solid;
-    // waterfallRainbow.primary[0] = 255;
-    // waterfallRainbow.primary[1] = 255;
-    // waterfallRainbow.primary[2] = 255;
+    // CLpxCommand waterfallRainbow;
+    // waterfallRainbow.delayMs = 50;
+    // waterfallRainbow.mode = ELpxModes::Waterfall;
+    // // waterfallRainbow.mode = ELpxModes::Solid;
+    // // waterfallRainbow.primary[0] = 255;
+    // // waterfallRainbow.primary[1] = 255;
+    // // waterfallRainbow.primary[2] = 255;
 
     CLpxCommand off;
     off.mode = ELpxModes::Off;
 
-    CLpxCommand src[] = {waterfallRainbow, off};
+    // CLpxCommand src[] = {waterfallRainbow, off};
+
+    CLpxCommand src[] = { off};
 
     std::vector<CLpxCommand> dest;
     dest.insert(dest.begin(), std::begin(src), std::end(src));
 
-    LpxConfig.CONNECTED_LIGHTS[i].commandAsyncQ(dest);
+    LpxConfig.CONNECTED_LIGHTS[i].commandAsync(dest);
   }
 
   Serial.println("Node_" + (String)LpxConfig.LPX_ID + "_Lit");
@@ -206,17 +211,21 @@ void Task0code(void *pvParameters)
     {
       client = new websockets::WebsocketsClient();
 
-      if (client->connect(LpxConfig.TARGET_IP, LpxConfig.TARGET_PORT, "/"))
+      Serial.println("Reconnecting to LPX Server");
+
+      while (!client->connect(LpxConfig.TARGET_IP, LpxConfig.TARGET_PORT, "/"))
       {
-        Serial.println("Reconnected after connection was lost");
+        Serial.print('.');
       }
+
+      Serial.println(" Reconnected");
 
       client->onMessage(onMessageCallback);
       client->onEvent(onEventsCallback);
     }
 
-    //delayMicroseconds(10);
-    vTaskDelay(1 / portTICK_RATE_MS);
+    // vTaskDelay(1 / portTICK_RATE_MS);
+    // delayMicroseconds(500);
   }
 }
 
@@ -375,7 +384,7 @@ void Task1code(void *pvParameters)
         response.clear();
       }
     }
-
     vTaskDelay(1 / portTICK_RATE_MS);
+    // delayMicroseconds(100);
   }
 }

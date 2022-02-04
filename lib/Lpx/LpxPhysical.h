@@ -17,13 +17,15 @@ public:
     static int gIndex;
 
     TaskHandle_t taskHandle;
-    CLpxCommand currentCommand;
-    std::vector<CLpxCommand> currentQ;
+    //CLpxCommand currentCommand;
+    std::vector<CLpxCommand> commandList;
 
     int index;
     int pin;
     int strand_length;
     CRGB *strand;
+
+    bool taskStateControl;
 
     //constructor
     //takes a pin and a length
@@ -35,19 +37,11 @@ public:
     void commandAsync(CLpxCommand command);
 
     //same thing as single command but after execustion it moves onto the next command
-    void commandAsyncQ(std::vector<CLpxCommand> commands);
-
-    //will send a notif to a command that its time to end, then on exit the task will kill itself
-    void commandSync(CLpxCommand command);
+    void commandAsync(std::vector<CLpxCommand> commands);
 
 private:
     //creates a task while ensuring that the other associated task has been destroyed
     void startUniqueTask(TaskFunction_t loop, void *passthrough);
-
-    //checkts he pointer and returns whether or not a task exists
-    //true if running
-    //false if dead
-    bool getTaskStatus();
 };
 
 enum EPeripheralType : uint8_t
