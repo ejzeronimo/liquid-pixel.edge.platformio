@@ -10,38 +10,40 @@ class FastLED;
 class CLpxCommand;
 struct CRGB;
 
-//NOTE: this is for the basic objects that will hold the physical strips and physical io information
+// NOTE: this is for the basic objects that will hold the physical strips and physical io information
 class CLpxStrip
 {
 public:
+    // for construction
     static int gIndex;
 
+    // for the task that each strand will have
     TaskHandle_t taskHandle;
-    //CLpxCommand currentCommand;
-    std::vector<CLpxCommand> commandList;
 
+    // stuff the modes will use
+    std::vector<CLpxCommand> commandList;
+    bool oneTimePerStrand;
+
+    // mutable state that is unique to this strand
+    int brightness;
+
+    // immutable state for this trand
+    CRGB *strand;
+    int strand_length;
     int index;
     int pin;
-    int strand_length;
-    CRGB *strand;
 
-    bool taskStateControl;
-
-    //constructor
-    //takes a pin and a length
+    // constructor
+    // takes a pin and a length
     CLpxStrip(int p, int l);
 
     void showStrand();
 
-    //starts and kills tasks instantly (note that some commands kill their task themselves)
+    // runs a single command (overload also uses same task handler just different vectorloading)
     void commandAsync(CLpxCommand command);
 
-    //same thing as single command but after execustion it moves onto the next command
+    // same thing as single command but after execution it moves onto the next command
     void commandAsync(std::vector<CLpxCommand> commands);
-
-private:
-    //creates a task while ensuring that the other associated task has been destroyed
-    void startUniqueTask(TaskFunction_t loop, void *passthrough);
 };
 
 enum EPeripheralType : uint8_t

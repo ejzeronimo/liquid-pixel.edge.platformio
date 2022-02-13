@@ -1,4 +1,6 @@
 #pragma once
+#include <FastLED.h>
+
 
 //NOTE: this is all lighting mode stuff
 enum ELpxModes : int
@@ -48,8 +50,10 @@ public:
     ELpxModes mode;
 
     //the colors
-    int primary[3];
-    int secondary[3];
+    CRGB primary;
+    CRGB secondary;
+    //int primary[3];
+    //int secondary[3];
 
     //other settings
     int delayMs;

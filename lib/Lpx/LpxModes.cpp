@@ -1,52 +1,49 @@
 #include "LpxModes.h"
 
 CLpxModes LpxModes;
-bool ONE_TIME_PER_COMMAND;
 
-bool CLpxModes::smartDelay(int ms, bool init, CLpxStrip *t)
+// NOTE: OFF
+void CLpxModes::off(CLpxStrip *target, CLpxCommand command, std::function<bool(int)> delayCallback)
 {
-  long startMs = millis(); //get the time
-
-  //Serial.println(foo);
-  while (millis() < (startMs + ms))
+  if (!target->oneTimePerStrand)
   {
-    if (t->taskStateControl != init)
+    fill_solid(target->strand, target->strand_length, CRGB(0, 0, 0));
+
+    if (delayCallback(-1))
     {
-      // Serial.println("here");
-      return false;
+      target->showStrand();
+      target->oneTimePerStrand = true;
+    }
+    else
+    {
+      return;
     }
   }
-
-  return true;
 }
 
-//NOTE: OFF
-bool CLpxModes::off(CLpxStrip *t, bool o)
+// NOTE: SOLID
+void CLpxModes::solid(CLpxStrip *target, CLpxCommand command, std::function<bool(int)> delayCallback)
 {
-  if (o)
+  if (!target->oneTimePerStrand)
   {
-    fill_solid(t->strand, t->strand_length, CRGB(0, 0, 0));
-    t->showStrand();
-  }
+    fill_solid(target->strand, target->strand_length, command.primary);
 
-  return false;
+    if (delayCallback(-1))
+    {
+      target->showStrand();
+      target->oneTimePerStrand = true;
+    }
+    else
+    {
+      return;
+    }
+  }
 }
 
-//NOTE: SOLID
-bool CLpxModes::solid(CLpxStrip *t, CLpxCommand c, bool o)
+// NOTE: RANDOM CLOUDY BLOBS
+void CLpxModes::randomCloudyBlobs(CLpxStrip *target, CLpxCommand command, std::function<bool(int)> delayCallback)
 {
-  if (o)
-  {
-    fill_solid(t->strand, t->strand_length, CRGB(c.primary[0], c.primary[1], c.primary[2]));
-    t->showStrand();
-  }
-
-  return false;
-}
-
-//NOTE: RANDOM CLOUDY BLOBS
-void CLpxModes::randomCloudyBlobs(CLpxStrip *t, CLpxCommand c, bool to)
-{
+  //TODO: here
   int blobCount = random16(3, t->strand_length / 7);
   int blobPos[blobCount];
 
@@ -67,7 +64,7 @@ void CLpxModes::randomCloudyBlobs(CLpxStrip *t, CLpxCommand c, bool to)
   }
 }
 
-//NOTE: FLASH
+// NOTE: FLASH
 void CLpxModes::flash(CLpxStrip *t, CLpxCommand c, bool to)
 {
   fill_solid(t->strand, t->strand_length, CRGB(c.primary[0], c.primary[1], c.primary[2]));
@@ -78,13 +75,13 @@ void CLpxModes::flash(CLpxStrip *t, CLpxCommand c, bool to)
   LpxModes.smartDelay(c.delayMs, to, t);
 }
 
-//NOTE: SWEEP
+// NOTE: SWEEP
 void CLpxModes::sweep(CLpxStrip target, byte r, byte g, byte b, int delayMs)
 {
-  //depreciated, will get rid of!
+  // depreciated, will get rid of!
 }
 
-//NOTE: TWINKLE
+// NOTE: TWINKLE
 void CLpxModes::randomTwinkle(CLpxStrip *target, CLpxCommand c, bool to)
 {
   int blobCount = random16(3, target->strand_length / 5);
@@ -107,7 +104,7 @@ void CLpxModes::randomTwinkle(CLpxStrip *target, CLpxCommand c, bool to)
   }
 }
 
-//NOTE: RANDOM TWINKLE
+// NOTE: RANDOM TWINKLE
 void CLpxModes::randomTwinkleRainbow(CLpxStrip *target, CLpxCommand c, bool to)
 {
   int blobCount = random16(3, target->strand_length / 5);
@@ -130,7 +127,7 @@ void CLpxModes::randomTwinkleRainbow(CLpxStrip *target, CLpxCommand c, bool to)
   }
 }
 
-//NOTE: RANDOM FLASH
+// NOTE: RANDOM FLASH
 void CLpxModes::randomFlash(CLpxStrip *target, CLpxCommand c, bool to)
 {
   fill_solid(target->strand, target->strand_length, CRGB(random16(255), random16(255), random16(255)));
@@ -141,7 +138,7 @@ void CLpxModes::randomFlash(CLpxStrip *target, CLpxCommand c, bool to)
   LpxModes.smartDelay(c.delayMs, to, target);
 }
 
-//NOTE: CHROMA
+// NOTE: CHROMA
 void CLpxModes::chroma(CLpxStrip *target, CLpxCommand c, bool to)
 {
   for (int i = 0; i < 255; i++)
@@ -152,7 +149,7 @@ void CLpxModes::chroma(CLpxStrip *target, CLpxCommand c, bool to)
   }
 }
 
-//NOTE: THEATER CHASE
+// NOTE: THEATER CHASE
 void CLpxModes::theaterChase(CLpxStrip *target, CLpxCommand c, bool to)
 {
   int i = 0;
@@ -169,7 +166,7 @@ void CLpxModes::theaterChase(CLpxStrip *target, CLpxCommand c, bool to)
   LpxModes.smartDelay(c.delayMs, to, target);
 }
 
-//NOTE: FADE IN
+// NOTE: FADE IN
 bool CLpxModes::fadeIn(CLpxStrip *target, CLpxCommand c, bool o, bool to)
 {
   if (o)
@@ -190,7 +187,7 @@ bool CLpxModes::fadeIn(CLpxStrip *target, CLpxCommand c, bool o, bool to)
   return false;
 }
 
-//NOTE: FADE OUT
+// NOTE: FADE OUT
 bool CLpxModes::fadeOut(CLpxStrip *target, CLpxCommand c, bool o, bool to)
 {
   if (o)
@@ -205,7 +202,7 @@ bool CLpxModes::fadeOut(CLpxStrip *target, CLpxCommand c, bool o, bool to)
   return false;
 }
 
-//NOTE: SUDDEN FLASH
+// NOTE: SUDDEN FLASH
 bool CLpxModes::sudden(CLpxStrip *target, CLpxCommand c, bool o, bool to)
 {
   if (o)
@@ -221,7 +218,7 @@ bool CLpxModes::sudden(CLpxStrip *target, CLpxCommand c, bool o, bool to)
   return false;
 }
 
-//NOTE: RANDOM BREATH
+// NOTE: RANDOM BREATH
 void CLpxModes::randomBreath(CLpxStrip *target, CLpxCommand command, bool to)
 {
   CRGB rand = CRGB(random16(255), random16(255), random16(255));
@@ -234,7 +231,7 @@ void CLpxModes::randomBreath(CLpxStrip *target, CLpxCommand command, bool to)
   }
   for (int i = 0; i < 255; i += 5)
   {
-    //done
+    // done
     fill_solid(target->strand, target->strand_length, rand);
     fadeLightBy(target->strand, target->strand_length, i);
     target->showStrand();
@@ -242,10 +239,10 @@ void CLpxModes::randomBreath(CLpxStrip *target, CLpxCommand command, bool to)
   }
 }
 
-//NOTE: BREATH
+// NOTE: BREATH
 void CLpxModes::rgbFadeInAndOut(CLpxStrip *target, CLpxCommand command, bool to)
 {
-  //we need to get the vars and set them here
+  // we need to get the vars and set them here
   for (int i = 0; i < 255; i += 5)
   {
     fill_solid(target->strand, target->strand_length, CRGB(command.primary[0], command.primary[1], command.primary[2]));
@@ -262,7 +259,7 @@ void CLpxModes::rgbFadeInAndOut(CLpxStrip *target, CLpxCommand command, bool to)
   }
 }
 
-//NOTE: FALLING STARS -- redo at some point
+// NOTE: FALLING STARS -- redo at some point
 void CLpxModes::fallingStars(CLpxStrip *target, CLpxCommand command, bool to)
 {
   int trailLen = 10;
@@ -293,7 +290,7 @@ void CLpxModes::fallingStars(CLpxStrip *target, CLpxCommand command, bool to)
   }
 }
 
-//NOTE: CHRISTMAS CHASE -- kill at some point
+// NOTE: CHRISTMAS CHASE -- kill at some point
 void CLpxModes::xmasChase(CLpxStrip *target, CLpxCommand command, bool to)
 {
   int i = 0;
@@ -310,7 +307,7 @@ void CLpxModes::xmasChase(CLpxStrip *target, CLpxCommand command, bool to)
   LpxModes.smartDelay(command.delayMs, to, target);
 }
 
-//NOTE: PONG -- redo at some point
+// NOTE: PONG -- redo at some point
 void CLpxModes::pong(CLpxStrip *target, CLpxCommand command, bool to)
 {
   int trailLen = 6;
@@ -366,7 +363,7 @@ void CLpxModes::pong(CLpxStrip *target, CLpxCommand command, bool to)
   }
 }
 
-//NOTE: WATERFALL
+// NOTE: WATERFALL
 bool CLpxModes::waterfall(CLpxStrip *t, CLpxCommand c, bool o, bool to)
 {
   if (o)
@@ -384,7 +381,7 @@ bool CLpxModes::waterfall(CLpxStrip *t, CLpxCommand c, bool o, bool to)
   return false;
 }
 
-//NOTE: WATERFALL RAINBOW --add to options
+// NOTE: WATERFALL RAINBOW --add to options
 bool CLpxModes::waterfallRainbow(CLpxStrip *t, CLpxCommand c, bool o, bool to)
 {
   if (o)
@@ -405,7 +402,7 @@ bool CLpxModes::waterfallRainbow(CLpxStrip *t, CLpxCommand c, bool o, bool to)
   return false;
 }
 
-//NOTE: LIGHTNING
+// NOTE: LIGHTNING
 bool CLpxModes::lightning(CLpxStrip *t, CLpxCommand c, bool o, bool to)
 {
   if (o)
@@ -422,7 +419,7 @@ bool CLpxModes::lightning(CLpxStrip *t, CLpxCommand c, bool o, bool to)
   return false;
 }
 
-//NOTE: WAVES -- redo at some point
+// NOTE: WAVES -- redo at some point
 void CLpxModes::waves(CLpxStrip *target, CLpxCommand command, bool to)
 {
   int trailLen = 10;
@@ -467,7 +464,7 @@ void CLpxModes::waves(CLpxStrip *target, CLpxCommand command, bool to)
   }
 }
 
-//NOTE: LEVELS -- redo at some point
+// NOTE: LEVELS -- redo at some point
 void CLpxModes::levels(CLpxStrip *target, CLpxCommand command, bool to)
 {
   int trailLen = target->strand_length;
@@ -516,10 +513,10 @@ void CLpxModes::levels(CLpxStrip *target, CLpxCommand command, bool to)
   }
 }
 
-//NOTE: RAIN -- redo at some point
-void CLpxModes::rain(CLpxStrip *target, CLpxCommand command, bool to)
+// NOTE: RAIN -- redo at some point
+void CLpxModes::rain(CLpxStrip *target, CLpxCommand command, std::function<bool(int)> delayCallback)
 {
-  int trailLen = 1; //round(pixelLen/delayMs);
+  int trailLen = 1; // round(pixelLen/delayMs);
   int offset = 4 + trailLen;
   int k;
   for (int q = 0; q < offset; q++)
@@ -545,22 +542,39 @@ void CLpxModes::rain(CLpxStrip *target, CLpxCommand command, bool to)
         {
           target->strand[i + q - (trailLen + 1)] = CRGB(0, 0, 0);
         }
-        LpxModes.smartDelay(2, to, target);
+        if (!delayCallback(2))
+        {
+          return;
+        }
+        // LpxModes.smartDelay(2, to, target);
       }
     }
-    target->showStrand();
-    LpxModes.smartDelay(command.delayMs, to, target);
+
+    if (delayCallback(-1))
+    {
+      target->showStrand();
+    }
+    else
+    {
+      return;
+    }
+
+    // LpxModes.smartDelay(command.delayMs, to, target);
+    if (!delayCallback(command.delayMs))
+    {
+      return;
+    }
   }
 }
 
-//NOTE: SOUNDSYNC
-void CLpxModes::soundsync(CLpxStrip *target, CLpxCommand command, bool to)
+// NOTE: SOUNDSYNC
+void CLpxModes::soundsync(CLpxStrip *target, CLpxCommand command, std::function<bool(int)> delayCallback)
 {
-  //strip.setBrightness(sound);
-  //strip.show();
-  //  for ( int i = 0; i <= pixelLen; i++)
-  //  {
-  //    strip.setPixelColor(i, r, g, b);
-  //    strip.show();
-  //  }
+  // strip.setBrightness(sound);
+  // strip.show();
+  //   for ( int i = 0; i <= pixelLen; i++)
+  //   {
+  //     strip.setPixelColor(i, r, g, b);
+  //     strip.show();
+  //   }
 }

@@ -138,10 +138,12 @@ CLpxCommand CLpxJson::handleCommandJson(JsonObject command, CLpxConfig config)
     value.delayMs = command["delayMs"];
     value.hard_interrupt = command["hard_interrupt"];
 
-    for (size_t i = 0; i < 3; i++)
-    {
-        value.primary[i] = command["primary"][i];
-    }
+    value.primary = CRGB(command["primary"][0],command["primary"][1],command["primary"][2]);
+
+    // for (size_t i = 0; i < 3; i++)
+    // {
+    //     value.primary[i] = command["primary"][i];
+    // }
 
     // y = "ending obj creation " + (String)millis();
     // Serial.println(y);

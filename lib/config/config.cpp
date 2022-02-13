@@ -8,8 +8,11 @@ const char *CLpxConfig::LPX_VERSION = "02.03.2022";
 //DEBUG: ROBBIE CHANGE THIS TO THE ID ON THE BLUE TAPE
 const char *CLpxConfig::LPX_ID = "E0001";
 
-const char *CLpxConfig::SSID_NAME = "lpx_wifi";
-const char *CLpxConfig::SSID_PASSPHRASE = "L1QU1DP1X3L";
+const char *CLpxConfig::SSID_NAME = "Noah";
+const char *CLpxConfig::SSID_PASSPHRASE = "Abr@h@mFGsltw!3161463";
+
+// const char *CLpxConfig::SSID_NAME = "lpx_wifi";
+// const char *CLpxConfig::SSID_PASSPHRASE = "L1QU1DP1X3L";
 
 const char *CLpxConfig::TARGET_IP = "172.16.17.57";
 const int CLpxConfig::TARGET_PORT = 742;
