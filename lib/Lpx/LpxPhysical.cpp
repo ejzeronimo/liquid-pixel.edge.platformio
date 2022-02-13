@@ -1,10 +1,9 @@
 #include "LpxPhysical.h"
 
-//NOTE: declaring values for the CLpxStrip
+// NOTE: declaring values for the CLpxStrip
 int CLpxStrip::gIndex = 0;
 
-CLpxStrip::CLpxStrip(int p, int l)
-{
+CLpxStrip::CLpxStrip(int p, int l) {
     index = gIndex;
     gIndex++;
 
@@ -12,43 +11,45 @@ CLpxStrip::CLpxStrip(int p, int l)
     strand_length = l;
     strand = new CRGB[l];
 
+    brightness = 255;
+
     oneTimePerStrand = false;
 }
 
-void CLpxStrip::showStrand()
-{
-    //we need to make this 
+void CLpxStrip::showStrand() {
+    // we need to make this
     FastLED[index].showLeds(this->brightness);
 }
 
-void CLpxStrip::commandAsync(CLpxCommand command)
-{
-    vTaskSuspend(taskHandle);
+void CLpxStrip::commandAsync(CLpxCommand command) {
+    vTaskSuspend(this->taskHandle);
 
-    //set out command
-    commandList.clear();
-    commandList.push_back(command);
+    // set out command
+    this->commandList.clear();
+    this->commandList.push_back(command);
+
+    this->oneTimePerStrand = false;
 
     // String y = "restarting task " + (String)millis();
     // Serial.println(y);
 
-    vTaskResume(taskHandle);
+    vTaskResume(this->taskHandle);
 }
 
-void CLpxStrip::commandAsync(std::vector<CLpxCommand> cmds)
-{
-    vTaskSuspend(taskHandle);
+void CLpxStrip::commandAsync(std::vector<CLpxCommand> cmds) {
+    vTaskSuspend(this->taskHandle);
 
-    //make a tuple with this object and an array of commands
-    commandList.clear();
-    commandList = cmds;
+    // make a tuple with this object and an array of commands
+    this->commandList.clear();
+    this->commandList = cmds;
 
-    vTaskResume(taskHandle);
+    this->oneTimePerStrand = false;
+
+    vTaskResume(this->taskHandle);
 }
 
-//NOTE: declaring values for the CLpxIO
-CLpxIO::CLpxIO(int p, EPeripheralMode m, EPeripheralType t)
-{
+// NOTE: declaring values for the CLpxIO
+CLpxIO::CLpxIO(int p, EPeripheralMode m, EPeripheralType t) {
     pin = p;
     mode = m;
     type = t;
@@ -58,14 +59,11 @@ CLpxIO::CLpxIO(int p, EPeripheralMode m, EPeripheralType t)
     localEventTriggered = false;
 }
 
-bool CLpxIO::setEvent(ELpxEventTypes e)
-{
-    if (type == EPeripheralType::Analog && e != ELpxEventTypes::analog)
-    {
+bool CLpxIO::setEvent(ELpxEventTypes e) {
+    if (type == EPeripheralType::Analog && e != ELpxEventTypes::analog) {
         return false;
     }
-    if (type == EPeripheralType::Digital && e == ELpxEventTypes::analog)
-    {
+    if (type == EPeripheralType::Digital && e == ELpxEventTypes::analog) {
         return false;
     }
 
