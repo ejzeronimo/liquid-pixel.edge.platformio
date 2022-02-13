@@ -140,6 +140,10 @@ CLpxCommand CLpxJson::handleCommandJson(JsonObject command, CLpxConfig config)
 
     value.primary = CRGB(command["primary"][0],command["primary"][1],command["primary"][2]);
 
+    // Serial.println(value.primary.r);
+    // Serial.println(value.primary.g);
+    // Serial.println(value.primary.b);
+
     // for (size_t i = 0; i < 3; i++)
     // {
     //     value.primary[i] = command["primary"][i];
