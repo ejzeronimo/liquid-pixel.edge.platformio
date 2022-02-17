@@ -6,7 +6,7 @@ CLpxConfig LpxConfig;
 const char *CLpxConfig::LPX_VERSION = "02.03.2022";
 
 //DEBUG: ROBBIE CHANGE THIS TO THE ID ON THE BLUE TAPE
-const char *CLpxConfig::LPX_ID = "E0001";
+const char *CLpxConfig::LPX_ID = "E0002";
 
 const char *CLpxConfig::SSID_NAME = "Noah";
 const char *CLpxConfig::SSID_PASSPHRASE = "Abr@h@mFGsltw!3161463";
@@ -25,7 +25,7 @@ String CLpxConfig::TARGET_ID = "";
 const int CLpxConfig::CONNECTED_PERIPHERALS_LENGTH = 1;
 CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
     {i1,
-     EPeripheralMode::Input,
+     EPeripheralMode::Output,
      EPeripheralType::Digital}
 };
 
@@ -44,11 +44,15 @@ CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
 // };
 
 //DEBUG: ROBBIE UNCOMMENT THIS ONE IF IT IS URSALA
-#define s1 14
-const int CLpxConfig::CONNECTED_LIGHTS_LENGTH = 1;
-CLpxStrip CLpxConfig::CONNECTED_LIGHTS[CONNECTED_LIGHTS_LENGTH] = {
-    {s1, 55}
-};
+// #define s1 14
+// const int CLpxConfig::CONNECTED_LIGHTS_LENGTH = 1;
+// CLpxStrip CLpxConfig::CONNECTED_LIGHTS[CONNECTED_LIGHTS_LENGTH] = {
+//     {s1, 55}
+// };
+
+const int CLpxConfig::CONNECTED_LIGHTS_LENGTH = 0;
+CLpxStrip CLpxConfig::CONNECTED_LIGHTS[CONNECTED_LIGHTS_LENGTH] = {};
+
 
 const void CLpxConfig::initConfig()
 {
@@ -59,11 +63,11 @@ const void CLpxConfig::initConfig()
     // FastLED.addLeds<WS2811, s2>(CONNECTED_LIGHTS[1].strand, CONNECTED_LIGHTS[1].strand_length).setCorrection(TypicalLEDStrip);
 
     //DEBUG: ROBBIE UNCOMMENT THIS ONE IF IT IS AN EEL
-    FastLED.addLeds<WS2812, s1, GRB>(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length).setCorrection(TypicalLEDStrip);
+    //FastLED.addLeds<WS2812, s1, GRB>(CONNECTED_LIGHTS[0].strand, CONNECTED_LIGHTS[0].strand_length).setCorrection(TypicalLEDStrip);
 
     //in here be sure to set pinmode
     //pulldown to ground if intput should be high
 
     //DEBUG: ROBBIE UNCOMMENT THIS ONE IF IT IS AN EEL
-    pinMode(i1, INPUT_PULLDOWN);
+    pinMode(i1, OUTPUT);
 }
