@@ -43,7 +43,7 @@ public:
     // the strand data
     int strand_index;
 
-    bool hard_interrupt;
+    int type;
 
     bool isTandem;
     int master_strand;

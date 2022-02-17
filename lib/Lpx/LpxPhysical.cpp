@@ -2,6 +2,7 @@
 
 // NOTE: declaring values for the CLpxStrip
 int CLpxStrip::gIndex = 0;
+int CLpxIO::gIndex = 0;
 
 CLpxStrip::CLpxStrip(int p, int l) {
     index = gIndex;
@@ -50,6 +51,9 @@ void CLpxStrip::commandAsync(std::vector<CLpxCommand> cmds) {
 
 // NOTE: declaring values for the CLpxIO
 CLpxIO::CLpxIO(int p, EPeripheralMode m, EPeripheralType t) {
+    index = gIndex;
+    gIndex++;
+
     pin = p;
     mode = m;
     type = t;
@@ -69,4 +73,30 @@ bool CLpxIO::setEvent(ELpxEventTypes e) {
 
     event = e;
     return true;
+}
+
+void CLpxIO::commandAsync(CLpxCommand command) {
+    vTaskSuspend(this->taskHandle);
+
+    // set out command
+    this->commandList.clear();
+    this->commandList.push_back(command);
+
+    // String y = "restarting task " + (String)millis();
+    // Serial.println(y);
+    this->eventTrigger = false;
+
+    vTaskResume(this->taskHandle);
+}
+
+void CLpxIO::commandAsync(std::vector<CLpxCommand> cmds) {
+    vTaskSuspend(this->taskHandle);
+
+    // make a tuple with this object and an array of commands
+    this->commandList.clear();
+    this->commandList = cmds;
+
+    this->eventTrigger = false;
+
+    vTaskResume(this->taskHandle);
 }

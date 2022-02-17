@@ -136,7 +136,7 @@ CLpxCommand CLpxJson::handleCommandJson(JsonObject command, CLpxConfig config)
     value.strand_index = command["strand_index"];
     value.mode = command["mode"];
     value.delayMs = command["delayMs"];
-    value.hard_interrupt = command["hard_interrupt"];
+    value.type = command["type"];
 
     value.primary = CRGB(command["primary"][0],command["primary"][1],command["primary"][2]);
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <FastLED.h>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "LpxCommand.h"
 #include "LpxModes.h"
@@ -11,8 +11,7 @@ class CLpxCommand;
 struct CRGB;
 
 // NOTE: this is for the basic objects that will hold the physical strips and physical io information
-class CLpxStrip
-{
+class CLpxStrip {
 public:
     // for construction
     static int gIndex;
@@ -46,22 +45,19 @@ public:
     void commandAsync(std::vector<CLpxCommand> commands);
 };
 
-enum EPeripheralType : uint8_t
-{
+enum EPeripheralType : uint8_t {
     Analog = 0,
     Digital
 };
 
-enum EPeripheralMode : int
-{
-    Input = 0,
+enum EPeripheralMode : uint8_t {
+    Input = 0x00,
     Input_Pullup,
     Input_Pulldown,
-    Output
+    Output,
 };
 
-enum ELpxEventTypes : byte
-{
+enum ELpxEventTypes : uint8_t {
     moment = 0x00,
     toggle = 0x01,
     hold = 0x02,
@@ -69,9 +65,11 @@ enum ELpxEventTypes : byte
     unset = 0x04
 };
 
-class CLpxIO
-{
+class CLpxIO {
 public:
+    // for construction
+    static int gIndex;
+
     int pin;
     EPeripheralType type;
     EPeripheralMode mode;
@@ -80,8 +78,19 @@ public:
     bool eventTrigger;
     int localEventValue;
     bool localEventTriggered;
+    int index;
+
+    // for the task that each io will have
+    TaskHandle_t taskHandle;
+    std::vector<CLpxCommand> commandList;
 
     CLpxIO(int p, EPeripheralMode m, EPeripheralType t);
 
     bool setEvent(ELpxEventTypes e);
+
+    // runs a single command (overload also uses same task handler just different vectorloading)
+    void commandAsync(CLpxCommand command);
+
+    // same thing as single command but after execution it moves onto the next command
+    void commandAsync(std::vector<CLpxCommand> commands);
 };
