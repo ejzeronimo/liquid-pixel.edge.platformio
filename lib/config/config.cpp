@@ -21,7 +21,7 @@ String CLpxConfig::TARGET_ID = "";
 //NOTE: define all the io under this
 
 //DEBUG: ROBBIE UNCOMMENT THIS ONE IF IT IS AN EEL
-#define i1 34
+#define i1 14
 const int CLpxConfig::CONNECTED_PERIPHERALS_LENGTH = 1;
 CLpxIO CLpxConfig::CONNECTED_PERIPHERALS[CONNECTED_PERIPHERALS_LENGTH] = {
     {i1,
