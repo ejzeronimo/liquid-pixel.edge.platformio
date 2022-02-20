@@ -153,7 +153,7 @@ void onMessageCallback(websockets::WebsocketsMessage message) {
         for (int i = 0; i < commands.size(); i++) {
             CLpxCommand temp = LpxJson.handleCommandJson(commands[i], LpxConfig);
             // for each command set the right value
-            if (commands[1]["type"] == 0) {
+            if (commands[i]["type"] == 0) {
                 LpxConfig.CONNECTED_LIGHTS[temp.strand_index].commandAsync(temp);
             } else {
                 LpxConfig.CONNECTED_PERIPHERALS[temp.strand_index].commandAsync(temp);
