@@ -6,7 +6,7 @@ CLpxConfig LpxConfig;
 const char *CLpxConfig::LPX_VERSION = "02.16.2022";
 
 //DEBUG: ROBBIE CHANGE THIS TO THE ID ON THE BLUE TAPE
-const char *CLpxConfig::LPX_ID = "E0002";
+const char *CLpxConfig::LPX_ID = "E0001";
 
 // const char *CLpxConfig::SSID_NAME = "Noah";
 // const char *CLpxConfig::SSID_PASSPHRASE = "Abr@h@mFGsltw!3161463";
