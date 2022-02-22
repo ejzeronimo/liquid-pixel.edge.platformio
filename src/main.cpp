@@ -236,6 +236,7 @@ void Task0code(void *pvParameters) {
 // NOTE: the new tasks for all IO - one for in, one for out, and one for lights, will add more as more features get added
 bool webSocketDelayCallback(int ms = -1) {
     if (ms == -1) {
+        vTaskDelay(1 / portTICK_PERIOD_MS);
         // default case
         return !wsData;
     } else {
@@ -248,6 +249,8 @@ bool webSocketDelayCallback(int ms = -1) {
                 Serial.println("killing early");
                 return false;
             }
+
+            vTaskDelay(1 / portTICK_PERIOD_MS);
         }
 
         return true;
